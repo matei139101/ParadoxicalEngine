@@ -1,3 +1,3 @@
-pub mod base_entities;
+pub mod cube_entity;
 pub mod entity;
-pub mod entity_enum;
+pub mod player_entity;

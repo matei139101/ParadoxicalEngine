@@ -17,7 +17,7 @@ use winit::{
 
 use crate::engine::{
     components::{
-        entity_component::{entities::entity_enum::EntityType, entity_events::CreateEntityEvent},
+        entity_component::{entities::cube_entity::CubeEntity, entity_events::CreateEntityEvent},
         vulkan_component::vulkan_events::{CreateVulkanInstanceEvent, VulkanDrawEvent},
     },
     utils::structs::transform::Transform,
@@ -65,26 +65,27 @@ impl ApplicationHandler for App {
             self.viewport_info.as_ref().unwrap(),
         )));
 
-        let message = CreateVulkanInstanceEvent {
+        let create_vk_container_message = CreateVulkanInstanceEvent {
             vulkan_container: vulkan_container.clone(),
         };
 
-        let _ = self.async_sender.send(Box::new(message));
+        let _ = self
+            .async_sender
+            .send(Box::new(create_vk_container_message));
 
+        //For testing purposes
         let cube1_transform = Transform::new(vec3(-1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0));
         let cube2_transform = Transform::new(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0));
 
         let _ = self.async_sender.send(Box::new(CreateEntityEvent {
-            entity_type: EntityType::CubeEntity,
-            transform: cube1_transform,
+            entity: Box::new(CubeEntity::new(cube1_transform)),
         }));
 
         let _ = self.async_sender.send(Box::new(CreateEntityEvent {
-            entity_type: EntityType::CubeEntity,
-            transform: cube2_transform,
+            entity: Box::new(CubeEntity::new(cube2_transform)),
         }));
 
-        //[TO:DO]: Locking the mouse for now. Needs to be thought over if it's meant to be here or elsewhere.
+        //[TO-DO]: Locking the mouse for now. Needs to be thought over if it's meant to be here or elsewhere.
         self.window
             .as_mut()
             .unwrap()
@@ -100,13 +101,14 @@ impl ApplicationHandler for App {
             }
             WindowEvent::RedrawRequested => {
                 let (confirmation_sender, confirmation_receiver) = oneshot::channel::<()>();
-                let message = Box::new(VulkanDrawEvent {
+                let draw_message = Box::new(VulkanDrawEvent {
                     viewport_location: vec3(0.0, 0.0, -5.0),
                     viewport_rotation: vec3(0.0, 0.0, 0.0),
                     confirmation_sender: Arc::new(Mutex::new(Some(confirmation_sender))),
                 });
 
-                let _ = self.async_sender.send(message);
+                let _ = self.async_sender.send(draw_message);
+                //Using a whole runtime just to wait for the frame confirmation message??
                 let _ = self.runtime.block_on(confirmation_receiver);
 
                 self.window.as_ref().unwrap().request_redraw();

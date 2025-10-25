@@ -1,12 +1,28 @@
 use std::any::Any;
 
-use crate::engine::utils::structs::{model::Model, transform::Transform};
+use dyn_clone::DynClone;
 
-pub trait Entity: Any + Send + Sync {
+use crate::engine::{
+    components::entity_component::entity_traits::{
+        player_controller::PlayerController, rendered_model::RenderedModel,
+    },
+    utils::structs::transform::Transform,
+};
+
+pub trait Entity: Send + Sync + DynClone {
     fn get_transform(&self) -> &Transform;
-    fn set_transform(&mut self, new_transform: Transform);
+    fn set_transform(&mut self, transform: Transform);
+
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+
+    fn as_player_controller(&self) -> Option<&dyn PlayerController> {
+        None
+    }
+
+    fn as_rendered_model(&self) -> Option<&dyn RenderedModel> {
+        None
+    }
 }
 
-pub trait HasModel {
-    fn get_model(&self) -> &Model;
-}
+dyn_clone::clone_trait_object!(Entity);

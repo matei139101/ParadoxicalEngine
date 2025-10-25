@@ -1,6 +1,6 @@
 use crate::engine::vulkan::structs::vertex::Vertex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Model {
     model: Vec<Vertex>,
 }

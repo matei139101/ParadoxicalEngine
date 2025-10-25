@@ -3,14 +3,14 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::engine::{
     components::{
         entity_component::{
-            entities::{base_entities::CubeEntity, entity::HasModel, entity_enum::EntityType},
+            entities::entity::Entity,
             entity_events::{CreateEntityEvent, DeleteEntityEvent},
+            entity_traits::rendered_model::RenderedModel,
         },
         vulkan_component::vulkan_events::{VulkanCreateObjectEvent, VulkanDeleteObjectEvent},
     },
     event_bus::event_bus::EventBus,
     repositories::entity_repository::EntityRepository,
-    utils::structs::transform::Transform,
 };
 use std::{
     any::Any,
@@ -51,7 +51,7 @@ impl EntityComponent {
             .observe::<CreateEntityEvent>(Box::new(move |event_any| {
                 if let Some(event) = event_any.downcast_ref::<CreateEntityEvent>() {
                     if let Ok(mut temp_self) = self_ptr_clone.lock() {
-                        temp_self.create_entity(event.entity_type.clone(), event.transform.clone());
+                        temp_self.create_entity(event.entity.clone());
                     }
                 }
             }));
@@ -68,20 +68,20 @@ impl EntityComponent {
             }));
     }
 
-    fn create_entity(&mut self, _entity_type: EntityType, entity_transform: Transform) {
-        let entity = CubeEntity::new(entity_transform.clone());
-        let vertices = entity.get_model().get_model().to_vec();
+    fn create_entity(&mut self, entity: Box<dyn Entity>) {
+        let object_transform = entity.get_transform().clone();
+        let entity_id = self.entity_repository.add_entity(entity.clone());
 
-        let entity_id = self.entity_repository.add_entity(Box::new(entity));
+        if let Some(render_entity) = entity.as_rendered_model() {
+            let vulkan_event = VulkanCreateObjectEvent {
+                object_id: *entity_id,
+                vertices: render_entity.get_model().get_model().to_vec(),
+                object_transform,
+                texture_path: render_entity.get_texture(),
+            };
 
-        let create_vulkan_object_event = VulkanCreateObjectEvent {
-            object_id: *entity_id,
-            object_transform: entity_transform,
-            vertices,
-            texture_path: "src/engine/vulkan/base_resources/default_texture.png".to_string(),
-        };
-
-        let _ = self.async_sender.send(Box::new(create_vulkan_object_event));
+            let _ = self.async_sender.send(Box::new(vulkan_event));
+        }
     }
 
     fn delete_entity(&mut self, entity_id: &usize) {

@@ -1,4 +1,3 @@
-use glam::vec3;
 use std::{any::Any, thread};
 use tokio::{
     self,
@@ -49,6 +48,8 @@ fn make_sync_runner(async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>) {
 
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
+
+    //[TO-DO]: Create the synchronizer.
 
     let mut app = App::new(sync_runtime, async_sender);
 
