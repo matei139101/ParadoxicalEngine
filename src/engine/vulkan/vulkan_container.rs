@@ -18,13 +18,9 @@ use vulkano::{
         SubpassContents, SubpassEndInfo,
     },
     descriptor_set::{
-        self,
-        allocator::{
-            DescriptorSetAllocator, StandardDescriptorSetAllocator,
-            StandardDescriptorSetAllocatorCreateInfo,
-        },
+        allocator::{StandardDescriptorSetAllocator, StandardDescriptorSetAllocatorCreateInfo},
         layout::{
-            self, DescriptorSetLayout, DescriptorSetLayoutBinding, DescriptorSetLayoutCreateInfo,
+            DescriptorSetLayout, DescriptorSetLayoutBinding, DescriptorSetLayoutCreateInfo,
             DescriptorType,
         },
         DescriptorSet, WriteDescriptorSet,
@@ -77,16 +73,16 @@ use crate::engine::{
 };
 
 pub struct VulkanContainer {
-    instance: Arc<Instance>,
-    surface: Arc<Surface>,
-    physical_device: Arc<PhysicalDevice>,
+    //instance: Arc<Instance>,
+    //surface: Arc<Surface>,
+    //physical_device: Arc<PhysicalDevice>,
     logical_device: Arc<Device>,
-    window: Arc<Window>,
+    //window: Arc<Window>,
     queue: Arc<Queue>,
     swapchain: Arc<Swapchain>,
-    images: Vec<Arc<Image>>,
-    image_views: Vec<Arc<ImageView>>,
-    render_pass: Arc<RenderPass>,
+    //images: Vec<Arc<Image>>,
+    //image_views: Vec<Arc<ImageView>>,
+    //render_pass: Arc<RenderPass>,
     memory_allocator: Arc<StandardMemoryAllocator>,
     command_buffer_allocator: Arc<StandardCommandBufferAllocator>,
     descriptor_set_allocator: Arc<StandardDescriptorSetAllocator>,
@@ -103,11 +99,7 @@ impl VulkanContainer {
         window: Arc<Window>,
         viewport_info: &ViewportInfo,
     ) -> Self {
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Creating Vulkan wrapper...",
-        );
+        Logger::log::<Self>(LogLevel::High, "Creating Vulkan wrapper...");
 
         let device_extensions = DeviceExtensions {
             khr_swapchain: true,
@@ -163,16 +155,16 @@ impl VulkanContainer {
         }];
 
         let vulkan_wrapper = VulkanContainer {
-            instance,
-            surface,
-            physical_device,
+            //instance,
+            //surface,
+            //physical_device,
             logical_device,
-            window,
+            //window,
             queue,
             swapchain,
-            images,
-            image_views,
-            render_pass,
+            //images,
+            //image_views,
+            //render_pass,
             memory_allocator,
             command_buffer_allocator,
             descriptor_set_allocator,
@@ -183,20 +175,12 @@ impl VulkanContainer {
             vulkan_objects: HashMap::new(),
         };
 
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Vulkan wrapper created successfully.",
-        );
+        Logger::log::<Self>(LogLevel::High, "Vulkan wrapper created successfully.");
         return vulkan_wrapper;
     }
 
     fn create_instance(event_loop: &ActiveEventLoop) -> Arc<Instance> {
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Creating Vulkan instance...",
-        );
+        Logger::log::<Self>(LogLevel::High, "Creating Vulkan instance...");
 
         let library = vulkano::library::VulkanLibrary::new().unwrap();
         let required_extensions =
@@ -212,25 +196,17 @@ impl VulkanContainer {
         )
         .expect("Could not create Vulkan instance");
 
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Vulkan instance created successfully.",
-        );
+        Logger::log::<Self>(LogLevel::High, "Vulkan instance created successfully.");
         return instance;
     }
 
     fn create_surface(instance: &Arc<Instance>, window: Arc<Window>) -> Arc<Surface> {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating surface...");
+        Logger::log::<Self>(LogLevel::High, "Creating surface...");
 
         let surface = vulkano::swapchain::Surface::from_window(instance.clone(), window)
             .expect("Could not create surface");
 
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Surface created successfully.",
-        );
+        Logger::log::<Self>(LogLevel::High, "Surface created successfully.");
         return surface;
     }
 
@@ -239,19 +215,14 @@ impl VulkanContainer {
         surface: &Arc<Surface>,
         device_extensions: &DeviceExtensions,
     ) -> (Arc<PhysicalDevice>, u32) {
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Creating physical device...",
-        );
+        Logger::log::<Self>(LogLevel::High, "Creating physical device...");
 
         let physical_devices = instance
             .enumerate_physical_devices()
             .expect("Could not enumerate physical devices");
 
-        Logger::log(
+        Logger::log::<Self>(
             LogLevel::Dev,
-            "vulkan_wrapper",
             &format!("Found {} physical devices.", physical_devices.len()),
         );
 
@@ -265,7 +236,7 @@ impl VulkanContainer {
                     .position(|(i, q)| {
                         q.queue_flags
                             .contains(vulkano::device::QueueFlags::GRAPHICS)
-                            && p.surface_support(i as u32, &surface).unwrap_or(false)
+                            && p.surface_support(i as u32, surface).unwrap_or(false)
                     })
                     .map(|q| (p, q as u32))
             })
@@ -278,12 +249,8 @@ impl VulkanContainer {
             })
             .expect("no device available");
 
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Physical device created successfully.",
-        );
-        return physical_device;
+        Logger::log::<Self>(LogLevel::High, "Physical device created successfully.");
+        physical_device
     }
 
     fn create_logical_device(
@@ -291,11 +258,7 @@ impl VulkanContainer {
         queue_family_index: u32,
         device_extensions: &DeviceExtensions,
     ) -> (Arc<Device>, Arc<Queue>) {
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Creating logical device...",
-        );
+        Logger::log::<Self>(LogLevel::High, "Creating logical device...");
 
         let (device, mut queues) = vulkano::device::Device::new(
             physical_device.clone(),
@@ -310,12 +273,8 @@ impl VulkanContainer {
         )
         .expect("failed to create device");
 
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Logical device created successfully.",
-        );
-        return (device, queues.next().unwrap());
+        Logger::log::<Self>(LogLevel::High, "Logical device created successfully.");
+        (device, queues.next().unwrap())
     }
 
     fn prepare_swapchain_create_info(
@@ -323,11 +282,7 @@ impl VulkanContainer {
         surface: Arc<Surface>,
         window: Arc<Window>,
     ) -> SwapchainCreateInfo {
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Preparing swapchain createinfo...",
-        );
+        Logger::log::<Self>(LogLevel::High, "Preparing swapchain createinfo...");
 
         let caps = physical_device
             .surface_capabilities(&surface, Default::default())
@@ -350,12 +305,11 @@ impl VulkanContainer {
             ..Default::default()
         };
 
-        Logger::log(
+        Logger::log::<Self>(
             LogLevel::High,
-            "vulkan_wrapper",
             "Swapchain createinfo prepared successfully.",
         );
-        return swapchain_create_info;
+        swapchain_create_info
     }
 
     fn create_swapchain(
@@ -364,7 +318,7 @@ impl VulkanContainer {
         window: Arc<Window>,
         surface: Arc<Surface>,
     ) -> (Arc<Swapchain>, Vec<Arc<Image>>) {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating swapchain...");
+        Logger::log::<Self>(LogLevel::High, "Creating swapchain...");
 
         let (swapchain, images) = Swapchain::new(
             device.clone(),
@@ -373,16 +327,12 @@ impl VulkanContainer {
         )
         .unwrap();
 
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Swapchain created successfully.",
-        );
-        return (swapchain, images);
+        Logger::log::<Self>(LogLevel::High, "Swapchain created successfully.");
+        (swapchain, images)
     }
 
     fn create_image_views(images: &Vec<Arc<Image>>) -> Vec<Arc<ImageView>> {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating image views...");
+        Logger::log::<Self>(LogLevel::High, "Creating image views...");
 
         let mut image_views: Vec<Arc<ImageView>> = Vec::new();
         for image in images {
@@ -407,19 +357,15 @@ impl VulkanContainer {
             image_views.push(image_view.unwrap());
         }
 
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Image views created successfully.",
-        );
-        return image_views;
+        Logger::log::<Self>(LogLevel::High, "Image views created successfully.");
+        image_views
     }
 
     fn create_render_pass(
         logical_device: Arc<Device>,
         swapchain: Arc<Swapchain>,
     ) -> Arc<RenderPass> {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating renderpass...");
+        Logger::log::<Self>(LogLevel::High, "Creating renderpass...");
 
         let render_pass = vulkano::single_pass_renderpass!(
             logical_device.clone(),
@@ -444,19 +390,15 @@ impl VulkanContainer {
         )
         .unwrap();
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Created renderpass.");
-        return render_pass;
+        Logger::log::<Self>(LogLevel::High, "Created renderpass.");
+        render_pass
     }
 
     fn create_graphics_pipeline(
         logical_device: Arc<Device>,
         render_pass: Arc<RenderPass>,
     ) -> Arc<GraphicsPipeline> {
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Creating graphics pipeline...",
-        );
+        Logger::log::<Self>(LogLevel::High, "Creating graphics pipeline...");
 
         let vs_path = Path::new(env!("OUT_DIR")).join("shader.vert.spv");
         let fs_path = Path::new(env!("OUT_DIR")).join("shader.frag.spv");
@@ -542,12 +484,8 @@ impl VulkanContainer {
 
         let pipeline = GraphicsPipeline::new(logical_device.clone(), None, pipeline_info).unwrap();
 
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Graphics pipeline created successfully.",
-        );
-        return pipeline;
+        Logger::log::<Self>(LogLevel::High, "Graphics pipeline created successfully.");
+        pipeline
     }
 
     fn create_frame_buffers(
@@ -555,7 +493,7 @@ impl VulkanContainer {
         image_views: Vec<Arc<ImageView>>,
         memory_allocator: Arc<StandardMemoryAllocator>,
     ) -> Vec<Arc<Framebuffer>> {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating frame buffer...");
+        Logger::log::<Self>(LogLevel::High, "Creating frame buffer...");
 
         let mut framebuffers: Vec<Arc<vulkano::render_pass::Framebuffer>> = vec![];
         for image_view in image_views.iter() {
@@ -593,46 +531,36 @@ impl VulkanContainer {
                 .unwrap(),
             );
         }
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Created frame buffer...");
-        return framebuffers;
+        Logger::log::<Self>(LogLevel::High, "Created frame buffer...");
+        framebuffers
     }
 
     fn create_memory_allocator(logical_device: Arc<Device>) -> Arc<StandardMemoryAllocator> {
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Creating memory allocator...",
-        );
+        Logger::log::<Self>(LogLevel::High, "Creating memory allocator...");
 
         let memory_allocator =
             Arc::new(StandardMemoryAllocator::new_default(logical_device.clone()));
 
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Created memory allocator.",
-        );
-        return memory_allocator;
+        Logger::log::<Self>(LogLevel::High, "Created memory allocator.");
+        memory_allocator
     }
 
     fn create_command_buffer_allocator(
         logical_device: Arc<Device>,
     ) -> Arc<StandardCommandBufferAllocator> {
-        return Arc::new(StandardCommandBufferAllocator::new(
+        Arc::new(StandardCommandBufferAllocator::new(
             logical_device.clone(),
             Default::default(),
-        ));
+        ))
     }
 
     fn create_descriptor_set_allocator(
         logical_device: Arc<Device>,
     ) -> Arc<StandardDescriptorSetAllocator> {
-        let descriptor_set_allocator = Arc::new(StandardDescriptorSetAllocator::new(
+        Arc::new(StandardDescriptorSetAllocator::new(
             logical_device,
             StandardDescriptorSetAllocatorCreateInfo::default(),
-        ));
-
-        return descriptor_set_allocator;
+        ))
     }
 
     fn load_shader(device: Arc<Device>, path: impl AsRef<std::path::Path>) -> Arc<ShaderModule> {
@@ -657,11 +585,7 @@ impl VulkanContainer {
         object_transform: &Transform,
         texture_path: &str,
     ) {
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Creating vulkan object...",
-        );
+        Logger::log::<Self>(LogLevel::High, "Creating vulkan object...");
 
         let vertex_buffer = Buffer::from_iter(
             self.memory_allocator.clone(),
@@ -685,7 +609,7 @@ impl VulkanContainer {
             self.graphics_pipeline
                 .layout()
                 .set_layouts()
-                .get(0)
+                .first()
                 .unwrap()
                 .clone(),
             [WriteDescriptorSet::image_view_sampler(
@@ -699,25 +623,17 @@ impl VulkanContainer {
 
         let vulkan_object =
             VulkanObject::new(vertex_buffer, object_transform.clone(), descriptor_set);
-        self.vulkan_objects.insert(id.clone(), vulkan_object);
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Vulkan object created successfully.",
-        );
+        self.vulkan_objects.insert(*id, vulkan_object);
+        Logger::log::<Self>(LogLevel::High, "Vulkan object created successfully.");
     }
 
+    /*
     pub fn delete_vulkan_object(&mut self, index: &usize) {
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Deleting vulkan object...",
-        );
+        Logger::log::<Self>(LogLevel::High, "Deleting vulkan object...");
 
         if *index >= self.vulkan_objects.len() {
-            Logger::log(
+            Logger::log::<Self>(
                 LogLevel::High,
-                "vulkan_wrapper",
                 "Index out of bounds for vulkan object deletion.",
             );
             return;
@@ -725,12 +641,9 @@ impl VulkanContainer {
 
         self.vulkan_objects.remove(index);
 
-        Logger::log(
-            LogLevel::High,
-            "vulkan_wrapper",
-            "Vulkan object deleted successfully.",
-        );
+        Logger::log::<Self>(LogLevel::High, "Vulkan object deleted successfully.");
     }
+    */
 
     fn create_command_buffer(
         &mut self,
@@ -798,16 +711,15 @@ impl VulkanContainer {
         }
 
         builder.end_render_pass(SubpassEndInfo::default()).unwrap();
-        let command_buffer = builder.build().unwrap();
 
-        return command_buffer;
+        builder.build().unwrap()
     }
 
     pub fn draw_frame(&mut self, camera_location: &Vec3, camera_rotation: &Vec3) {
         let (image_index, _, acquire_future) =
             swapchain::acquire_next_image(self.swapchain.clone(), None).unwrap();
         let view_projection = VulkanContainer::make_view_projection(
-            self.viewports[0].extent[0] as f32 / self.viewports[0].extent[1] as f32,
+            self.viewports[0].extent[0] / self.viewports[0].extent[1],
             camera_location,
             camera_rotation,
         );
@@ -830,8 +742,9 @@ impl VulkanContainer {
         }
     }
 
+    /*
     pub fn resize_viewport(&mut self, viewport_info: &ViewportInfo) {
-        Logger::log(LogLevel::Medium, "vulkan_wrapper", "Resizing viewport...");
+        Logger::log::<Self>(LogLevel::Medium, "Resizing viewport...");
 
         self.viewports[0] = Viewport {
             offset: [viewport_info.offset[0], viewport_info.offset[1]],
@@ -870,12 +783,9 @@ impl VulkanContainer {
             self.memory_allocator.clone(),
         );
 
-        Logger::log(
-            LogLevel::Medium,
-            "vulkan_wrapper",
-            "Viewport resized successfully.",
-        );
+        Logger::log::<Self>(LogLevel::Medium, "Viewport resized successfully.");
     }
+    */
 
     fn make_view_projection(
         aspect_ratio: f32,
@@ -890,9 +800,8 @@ impl VulkanContainer {
         let translation = Mat4::from_translation(*camera_location);
         let view = rotation * translation;
         let proj = Mat4::perspective_rh_gl(45.0_f32.to_radians(), aspect_ratio, 0.1, 1000.0);
-        let view_projection = proj * view;
 
-        return view_projection;
+        proj * view
     }
 
     //[TO-DO]: Almost entirely AI generated so I'll need to look this over some time to remake it properly.

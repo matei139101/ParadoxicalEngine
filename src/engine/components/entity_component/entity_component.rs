@@ -2,12 +2,8 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::engine::{
     components::{
-        entity_component::{
-            entities::entity::Entity,
-            entity_events::{CreateEntityEvent, DeleteEntityEvent},
-            entity_traits::rendered_model::RenderedModel,
-        },
-        vulkan_component::vulkan_events::{VulkanCreateObjectEvent, VulkanDeleteObjectEvent},
+        entity_component::{entities::entity::Entity, entity_events::CreateEntityEvent},
+        vulkan_component::vulkan_events::VulkanCreateObjectEvent,
     },
     event_bus::event_bus::EventBus,
     repositories::entity_repository::EntityRepository,
@@ -56,6 +52,7 @@ impl EntityComponent {
                 }
             }));
 
+        /*
         let self_ptr_clone = self_ptr.clone();
         bus_arc
             .clone()
@@ -66,6 +63,7 @@ impl EntityComponent {
                     }
                 }
             }));
+        */
     }
 
     fn create_entity(&mut self, entity: Box<dyn Entity>) {
@@ -84,6 +82,7 @@ impl EntityComponent {
         }
     }
 
+    /*
     fn delete_entity(&mut self, entity_id: &usize) {
         self.entity_repository.remove_entity(entity_id);
 
@@ -93,4 +92,5 @@ impl EntityComponent {
 
         let _ = self.async_sender.send(Box::new(vulkan_delete_event));
     }
+    */
 }

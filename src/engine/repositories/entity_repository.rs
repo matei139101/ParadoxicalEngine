@@ -23,13 +23,17 @@ impl EntityRepository {
         &self.unused_id
     }
 
+    /*
     pub fn remove_entity(&mut self, entity_id: &usize) {
         //[TO-DO]: Add some error checking or logging
         self.entities.remove(entity_id);
     }
+    */
 
+    /*
     pub fn get_entity(&mut self, entity_id: &usize) -> &mut Box<dyn Entity> {
         //[TO-DO]: Add some error checking or logging
         self.entities.get_mut(entity_id).unwrap()
     }
+    */
 }

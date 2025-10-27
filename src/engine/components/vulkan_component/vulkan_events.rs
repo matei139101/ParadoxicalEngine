@@ -5,10 +5,7 @@ use tokio::sync::oneshot;
 
 use crate::engine::{
     utils::structs::transform::Transform,
-    vulkan::{
-        structs::{vertex::Vertex, viewport::ViewportInfo},
-        vulkan_container::VulkanContainer,
-    },
+    vulkan::{structs::vertex::Vertex, vulkan_container::VulkanContainer},
 };
 
 pub struct CreateVulkanInstanceEvent {
@@ -21,9 +18,11 @@ pub struct VulkanDrawEvent {
     pub confirmation_sender: Arc<Mutex<Option<oneshot::Sender<()>>>>,
 }
 
+/*
 pub struct ViewportResizeInfo {
     pub viewport_information: ViewportInfo,
 }
+*/
 
 pub struct VulkanCreateObjectEvent {
     pub object_id: usize,
@@ -32,6 +31,8 @@ pub struct VulkanCreateObjectEvent {
     pub texture_path: String,
 }
 
+/*
 pub struct VulkanDeleteObjectEvent {
     pub object_id: usize,
 }
+*/
