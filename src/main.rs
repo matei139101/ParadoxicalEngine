@@ -15,7 +15,9 @@ use crate::engine::{
     },
     event_bus::event_bus::EventBus,
 };
+use crate::prelude::*;
 mod engine;
+mod prelude;
 
 fn main() {
     let (async_sender, async_receiver) = mpsc::unbounded_channel::<Box<dyn Any + Send + Sync>>();
@@ -29,7 +31,7 @@ fn make_async_runner(
     async_receiver: UnboundedReceiver<Box<dyn Any + Send + Sync>>,
 ) {
     thread::spawn(move || {
-        println!("Async thread started");
+        log!(High, "Starting async runtime");
         let async_runtime = tokio::runtime::Runtime::new().unwrap();
 
         let event_bus = EventBus::new();
@@ -44,7 +46,7 @@ fn make_async_runner(
 
 fn make_sync_runner(async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>) {
     let sync_runtime = Runtime::new().unwrap();
-    println!("Synchronous runtime created");
+    log!(High, "Synchronous runtime created");
 
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
