@@ -34,7 +34,7 @@ impl Debugger {
             logs: Mutex::new(Vec::new()),
             widgets: Mutex::new(HashMap::new()),
             widget_window_size: 5,
-            log_window_size: 20,
+            log_window_size: 5,
         };
 
         debugger.create_terminal_window();
@@ -49,8 +49,8 @@ impl Debugger {
 
             debugger_runtime.block_on(async {
                 loop {
-                    DEBUGGER.update_widgets();
-                    tokio::time::sleep(Duration::from_secs(5)).await;
+                    DEBUGGER.update_terminal();
+                    tokio::time::sleep(Duration::from_secs(1)).await;
                 }
             });
         });
@@ -67,7 +67,7 @@ impl Debugger {
             );
 
             self.logs.lock().unwrap().push(formatted_message);
-            self.update_log();
+            self.update_terminal();
         }
     }
 
@@ -81,7 +81,7 @@ impl Debugger {
             );
 
             self.logs.lock().unwrap().push(formatted_message);
-            self.update_log();
+            self.update_terminal();
         }
     }
 
@@ -91,7 +91,7 @@ impl Debugger {
             .unwrap()
             .insert(value_name, value_pointer);
 
-        self.update_widgets();
+        self.update_terminal();
     }
 
     fn create_terminal_window(&self) {
@@ -169,6 +169,12 @@ impl Debugger {
             stdout(),
             MoveTo(0, terminal::size().expect("No terminal was found?").1),
         );
+    }
+
+    fn update_terminal(&self) {
+        self.create_terminal_window();
+        self.update_widgets();
+        self.update_log();
     }
 }
 
