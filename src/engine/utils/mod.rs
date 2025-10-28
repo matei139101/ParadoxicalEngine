@@ -1,2 +1,2 @@
-pub mod logger;
+pub mod debugger;
 pub mod structs;

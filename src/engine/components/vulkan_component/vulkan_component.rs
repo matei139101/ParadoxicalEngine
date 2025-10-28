@@ -1,18 +1,27 @@
 use glam::Vec3;
 
-use crate::engine::{
-    components::vulkan_component::vulkan_events::{
-        CreateVulkanInstanceEvent, VulkanCreateObjectEvent, VulkanDrawEvent,
+use crate::{
+    engine::{
+        components::vulkan_component::vulkan_events::{
+            CreateVulkanInstanceEvent, VulkanCreateObjectEvent, VulkanDrawEvent,
+        },
+        event_bus::event_bus::EventBus,
+        utils::structs::transform::Transform,
+        vulkan::{structs::vertex::Vertex, vulkan_container::VulkanContainer},
     },
-    event_bus::event_bus::EventBus,
-    utils::structs::transform::Transform,
-    vulkan::{structs::vertex::Vertex, vulkan_container::VulkanContainer},
+    widget,
 };
-use std::sync::{Arc, Mutex};
+use std::{
+    sync::{Arc, Mutex, RwLock},
+    time::{Duration, Instant},
+};
 
 pub struct VulkanComponent {
     vulkan_container: Option<Arc<Mutex<VulkanContainer>>>,
     event_bus_ptr: Arc<EventBus>,
+    last_framecheck: Instant,
+    frame_count: u32,
+    fps: Arc<RwLock<f32>>,
 }
 
 impl VulkanComponent {
@@ -20,9 +29,17 @@ impl VulkanComponent {
         let vulkan_component = Arc::new(Mutex::new(VulkanComponent {
             vulkan_container: Default::default(),
             event_bus_ptr,
+            last_framecheck: Instant::now(),
+            frame_count: 0,
+            fps: Arc::new(RwLock::new(0.0)),
         }));
 
         VulkanComponent::observe_events(vulkan_component.clone());
+
+        widget!(
+            "FPS".to_string(),
+            vulkan_component.lock().unwrap().fps.clone()
+        );
 
         vulkan_component
     }
@@ -81,10 +98,6 @@ impl VulkanComponent {
 
     fn create_vulkan_container(&mut self, vulkan_container: Arc<Mutex<VulkanContainer>>) {
         self.vulkan_container = Some(vulkan_container);
-        println!(
-            "Vulkan container is something: {:?}",
-            self.vulkan_container.is_some()
-        )
     }
 
     fn draw_frame(&mut self, viewport_location: &Vec3, viewport_rotation: &Vec3) {
@@ -94,6 +107,15 @@ impl VulkanComponent {
             .lock()
             .unwrap()
             .draw_frame(viewport_location, viewport_rotation);
+
+        self.frame_count += 1;
+        let elapsed = self.last_framecheck.elapsed();
+
+        if elapsed >= Duration::from_secs(1) {
+            *self.fps.write().unwrap() = self.frame_count as f32 / elapsed.as_secs_f32();
+            self.frame_count = 0;
+            self.last_framecheck = Instant::now();
+        }
     }
 
     fn create_vulkan_object(

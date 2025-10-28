@@ -4,10 +4,7 @@ use std::{
     any::Any,
     sync::{Arc, Mutex},
 };
-use tokio::{
-    runtime::Runtime,
-    sync::{mpsc::UnboundedSender, oneshot},
-};
+use tokio::sync::{mpsc::UnboundedSender, oneshot};
 use winit::{
     application::ApplicationHandler,
     event::{DeviceEvent, DeviceId, WindowEvent},
@@ -28,19 +25,14 @@ use crate::engine::{
 pub struct App {
     window: Option<Arc<Window>>,
     viewport_info: Option<ViewportInfo>,
-    runtime: Runtime,
     async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
 }
 
 impl App {
-    pub fn new(
-        runtime: Runtime,
-        async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-    ) -> Self {
+    pub fn new(async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>) -> Self {
         App {
             window: Default::default(),
             viewport_info: Default::default(),
-            runtime,
             async_sender,
         }
     }
@@ -87,11 +79,13 @@ impl ApplicationHandler for App {
         }));
 
         //[TO-DO]: Locking the mouse for now. Needs to be thought over if it's meant to be here or elsewhere.
+        /*
         self.window
             .as_mut()
             .unwrap()
             .set_cursor_grab(winit::window::CursorGrabMode::Locked)
             .unwrap();
+        */
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
@@ -109,8 +103,7 @@ impl ApplicationHandler for App {
                 });
 
                 let _ = self.async_sender.send(draw_message);
-                //Using a whole runtime just to wait for the frame confirmation message??
-                let _ = self.runtime.block_on(confirmation_receiver);
+                confirmation_receiver.blocking_recv().unwrap();
 
                 self.window.as_ref().unwrap().request_redraw();
             }

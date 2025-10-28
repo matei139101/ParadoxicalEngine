@@ -1,7 +1,9 @@
-use std::{any::Any, thread};
+use std::{
+    any::Any,
+    thread::{self},
+};
 use tokio::{
     self,
-    runtime::Runtime,
     sync::mpsc::{self, UnboundedReceiver, UnboundedSender},
 };
 use winit::event_loop::ControlFlow;
@@ -23,7 +25,14 @@ fn main() {
     let (async_sender, async_receiver) = mpsc::unbounded_channel::<Box<dyn Any + Send + Sync>>();
 
     make_async_runner(async_sender.clone(), async_receiver);
-    make_sync_runner(async_sender.clone());
+
+    let event_loop = EventLoop::new().unwrap();
+    event_loop.set_control_flow(ControlFlow::Poll);
+
+    //[TO-DO]: Create the synchronizer.
+
+    let mut app = App::new(async_sender);
+    let _ = event_loop.run_app(&mut app);
 }
 
 fn make_async_runner(
@@ -42,18 +51,4 @@ fn make_async_runner(
             EventBus::run(event_bus.clone(), async_receiver).await;
         })
     });
-}
-
-fn make_sync_runner(async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>) {
-    let sync_runtime = Runtime::new().unwrap();
-    log!(High, "Synchronous runtime created");
-
-    let event_loop = EventLoop::new().unwrap();
-    event_loop.set_control_flow(ControlFlow::Poll);
-
-    //[TO-DO]: Create the synchronizer.
-
-    let mut app = App::new(sync_runtime, async_sender);
-
-    let _ = event_loop.run_app(&mut app);
 }

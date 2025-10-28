@@ -1,3 +1,4 @@
+use crate::prelude::*;
 use glam::{Mat4, Vec3};
 use smallvec::{smallvec, SmallVec};
 use std::path::Path;
@@ -68,7 +69,6 @@ use crate::engine::{
     utils::structs::transform::Transform,
     vulkan::structs::{push_constants::PushConstants, vertex::Vertex, vulkan_object::VulkanObject},
 };
-use crate::prelude::*;
 
 pub struct VulkanContainer {
     //instance: Arc<Instance>,
@@ -97,7 +97,7 @@ impl VulkanContainer {
         window: Arc<Window>,
         viewport_info: &ViewportInfo,
     ) -> Self {
-        log!(Self, High, "Creating Vulkan container...");
+        log!(Self, High, "Creating Vulkan wrapper...");
 
         let device_extensions = DeviceExtensions {
             khr_swapchain: true,
@@ -641,7 +641,6 @@ impl VulkanContainer {
     }
     */
 
-    //[TO-DO]: Log!!!
     fn create_command_buffer(
         &mut self,
         image_index: usize,
@@ -712,7 +711,6 @@ impl VulkanContainer {
         builder.build().unwrap()
     }
 
-    //[TO-DO]: Log!!!
     pub fn draw_frame(&mut self, camera_location: &Vec3, camera_rotation: &Vec3) {
         let (image_index, _, acquire_future) =
             swapchain::acquire_next_image(self.swapchain.clone(), None).unwrap();
@@ -785,7 +783,6 @@ impl VulkanContainer {
     }
     */
 
-    //[TO-DO]: Log!!!
     fn make_view_projection(
         aspect_ratio: f32,
         camera_location: &Vec3,
@@ -799,11 +796,11 @@ impl VulkanContainer {
         let translation = Mat4::from_translation(*camera_location);
         let view = rotation * translation;
         let proj = Mat4::perspective_rh_gl(45.0_f32.to_radians(), aspect_ratio, 0.1, 1000.0);
+        let view_projection = proj * view;
 
-        proj * view
+        return view_projection;
     }
 
-    //[TO-DO]: Log!!!
     //[TO-DO]: Almost entirely AI generated so I'll need to look this over some time to remake it properly.
     fn load_png_texture(
         &mut self,
