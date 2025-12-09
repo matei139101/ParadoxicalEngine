@@ -14,9 +14,9 @@ use winit::{
 };
 
 use crate::engine::{
-    components::{
-        entity_component::{entities::cube_entity::CubeEntity, entity_events::CreateEntityEvent},
-        vulkan_component::vulkan_events::{CreateVulkanInstanceEvent, VulkanDrawEvent},
+    services::{
+        entity_service::{entities::cube_entity::CubeEntity, entity_events::CreateEntityEvent},
+        vulkan_service::vulkan_events::{CreateVulkanInstanceEvent, VulkanDrawEvent},
     },
     utils::structs::transform::Transform,
     vulkan::{structs::viewport::ViewportInfo, vulkan_container::VulkanContainer},

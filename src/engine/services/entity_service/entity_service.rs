@@ -1,41 +1,41 @@
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::engine::{
-    components::{
-        entity_component::{entities::entity::Entity, entity_events::CreateEntityEvent},
-        vulkan_component::vulkan_events::VulkanCreateObjectEvent,
-    },
     event_bus::event_bus::EventBus,
     repositories::entity_repository::EntityRepository,
+    services::{
+        entity_service::{entities::entity::Entity, entity_events::CreateEntityEvent},
+        vulkan_service::vulkan_events::VulkanCreateObjectEvent,
+    },
 };
 use std::{
     any::Any,
     sync::{Arc, Mutex},
 };
 
-pub struct EntityComponent {
+pub struct EntityService {
     entity_repository: EntityRepository,
     event_bus_ptr: Arc<EventBus>,
     async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
 }
 
-impl EntityComponent {
+impl EntityService {
     pub fn new(
         event_bus_ptr: Arc<EventBus>,
         async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
     ) -> Arc<Mutex<Self>> {
-        let entity_component = Arc::new(Mutex::new(EntityComponent {
+        let entity_service = Arc::new(Mutex::new(EntityService {
             entity_repository: EntityRepository::new(),
             event_bus_ptr: event_bus_ptr.clone(),
             async_sender,
         }));
 
-        EntityComponent::observe_events(entity_component.clone());
+        EntityService::observe_events(entity_service.clone());
 
-        entity_component
+        entity_service
     }
 
-    pub fn observe_events(self_ptr: Arc<Mutex<EntityComponent>>) {
+    pub fn observe_events(self_ptr: Arc<Mutex<EntityService>>) {
         let bus_arc = {
             let this = self_ptr.lock().unwrap();
             this.event_bus_ptr.clone()

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::engine::components::entity_component::entities::entity::Entity;
+use crate::engine::services::entity_service::entities::entity::Entity;
 
 pub struct EntityRepository {
     entities: HashMap<usize, Box<dyn Entity>>,

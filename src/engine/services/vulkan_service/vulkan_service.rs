@@ -2,10 +2,10 @@ use glam::Vec3;
 
 use crate::{
     engine::{
-        components::vulkan_component::vulkan_events::{
+        event_bus::event_bus::EventBus,
+        services::vulkan_service::vulkan_events::{
             CreateVulkanInstanceEvent, VulkanCreateObjectEvent, VulkanDrawEvent,
         },
-        event_bus::event_bus::EventBus,
         utils::structs::transform::Transform,
         vulkan::{structs::vertex::Vertex, vulkan_container::VulkanContainer},
     },
@@ -16,7 +16,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-pub struct VulkanComponent {
+pub struct VulkanService {
     vulkan_container: Option<Arc<Mutex<VulkanContainer>>>,
     event_bus_ptr: Arc<EventBus>,
     last_framecheck: Instant,
@@ -24,9 +24,9 @@ pub struct VulkanComponent {
     fps: Arc<RwLock<f32>>,
 }
 
-impl VulkanComponent {
-    pub fn new(event_bus_ptr: Arc<EventBus>) -> Arc<Mutex<VulkanComponent>> {
-        let vulkan_component = Arc::new(Mutex::new(VulkanComponent {
+impl VulkanService {
+    pub fn new(event_bus_ptr: Arc<EventBus>) -> Arc<Mutex<VulkanService>> {
+        let vulkan_service = Arc::new(Mutex::new(VulkanService {
             vulkan_container: Default::default(),
             event_bus_ptr,
             last_framecheck: Instant::now(),
@@ -34,17 +34,17 @@ impl VulkanComponent {
             fps: Arc::new(RwLock::new(0.0)),
         }));
 
-        VulkanComponent::observe_events(vulkan_component.clone());
+        VulkanService::observe_events(vulkan_service.clone());
 
         widget!(
             "FPS".to_string(),
-            vulkan_component.lock().unwrap().fps.clone()
+            vulkan_service.lock().unwrap().fps.clone()
         );
 
-        vulkan_component
+        vulkan_service
     }
 
-    pub fn observe_events(self_ptr: Arc<Mutex<VulkanComponent>>) {
+    pub fn observe_events(self_ptr: Arc<Mutex<VulkanService>>) {
         let bus_arc = {
             let this = self_ptr.lock().unwrap();
             this.event_bus_ptr.clone()

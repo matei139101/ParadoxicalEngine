@@ -11,11 +11,11 @@ use winit::event_loop::EventLoop;
 
 use crate::engine::{
     app::App,
-    components::{
-        entity_component::entity_component::EntityComponent,
-        vulkan_component::vulkan_component::VulkanComponent,
-    },
     event_bus::event_bus::EventBus,
+    services::{
+        entity_service::entity_service::EntityService,
+        vulkan_service::vulkan_service::VulkanService,
+    },
 };
 use crate::prelude::*;
 mod engine;
@@ -44,8 +44,8 @@ fn make_async_runner(
         let async_runtime = tokio::runtime::Runtime::new().unwrap();
 
         let event_bus = EventBus::new();
-        let _vulkan_component = VulkanComponent::new(event_bus.clone());
-        let _entity_component = EntityComponent::new(event_bus.clone(), async_sender.clone());
+        let _vulkan_component = VulkanService::new(event_bus.clone());
+        let _entity_component = EntityService::new(event_bus.clone(), async_sender.clone());
 
         async_runtime.block_on(async {
             EventBus::run(event_bus.clone(), async_receiver).await;
