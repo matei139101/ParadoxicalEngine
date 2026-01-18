@@ -1,4 +1,4 @@
-use crate::engine::services::entity_service::entities::entity::Entity;
+use crate::engine::utils::structs::entity::Entity;
 
 pub struct CreateEntityEvent {
     pub entity: Box<dyn Entity>,

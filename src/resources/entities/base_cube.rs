@@ -1,23 +1,22 @@
-use glam::{vec2, vec3};
+use std::{any::Any, sync::Arc};
 
-use crate::engine::{
-    services::entity_service::{
-        entities::entity::Entity, entity_traits::rendered_model::RenderedModel,
-    },
-    utils::structs::{model::Model, transform::Transform},
-    vulkan::structs::vertex::Vertex,
-};
+use glam::{vec2, vec3};
+use tokio::sync::mpsc::UnboundedSender;
+
+use crate::engine::{repositories::entity_repository::EntityRepository, services::vulkan_service::vulkan_events::VulkanCreateObjectEvent, utils::structs::{entity::Entity, model::Model, transform::Transform}, vulkan::structs::vertex::Vertex};
 
 #[derive(Clone)]
-pub struct CubeEntity {
+pub struct BaseCube {
+    name: String,
     transform: Transform,
     model: Model,
     texture_path: String,
 }
 
-impl CubeEntity {
-    pub fn new(transform: Transform) -> Self {
-        CubeEntity {
+impl BaseCube {
+    pub fn new(name: String, transform: Transform) -> BaseCube {
+        BaseCube { 
+            name,
             transform,
             model: Model::new(vec![
                 // Front face (+Z)
@@ -212,34 +211,19 @@ impl CubeEntity {
     }
 }
 
-impl Entity for CubeEntity {
-    fn get_transform(&self) -> &Transform {
-        &self.transform
-    }
+impl Entity for BaseCube {
+    fn load(&self, repository: Arc<EntityRepository>, async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>) {
+        let id = repository.get_id();
+        repository.add_entity(id, self.name.clone());
+        repository.add_transform(id, self.transform.clone());
 
-    fn set_transform(&mut self, transform: Transform) {
-        self.transform = transform;
-    }
+        let vulkan_event = VulkanCreateObjectEvent {
+            object_id: id,
+            vertices: self.model.get_model().to_vec(),
+            object_transform: self.transform.clone(),
+            texture_path: self.texture_path.clone(),
+        };
 
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
-    fn as_rendered_model(&self) -> Option<&dyn RenderedModel> {
-        Some(self)
-    }
-}
-
-impl RenderedModel for CubeEntity {
-    fn get_model(&self) -> &Model {
-        &self.model
-    }
-
-    fn get_texture(&self) -> String {
-        self.texture_path.clone()
+        let _ = async_sender.send(Box::new(vulkan_event));
     }
 }

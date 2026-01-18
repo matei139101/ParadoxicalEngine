@@ -16,7 +16,7 @@ use tokio::runtime::Runtime;
 #[derive(Debug, Eq, PartialEq, PartialOrd)]
 pub enum LogLevel {
     Low = 1,
-    //Medium = 2,
+    Medium = 2,
     High = 3,
     Dev = 4,
     Critical = 5,
