@@ -4,7 +4,10 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::engine::repositories::entity_repository::EntityRepository;
 
-pub trait Entity: Clone {
-    fn load(&self, repository: Arc<EntityRepository>, async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>);
+pub trait Entity: Send + Sync {
+    fn load(
+        &self,
+        repository: Arc<EntityRepository>,
+        async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+    );
 }
-

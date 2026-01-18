@@ -2,10 +2,8 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
     engine::{
-        event_bus::event_bus::EventBus,
-        services::{
-            entity_service::{entity_events::CreateEntityEvent},
-        }, utils::structs::entity::Entity,
+        event_bus::event_bus::EventBus, services::entity_service::entity_events::CreateEntityEvent,
+        utils::structs::entity::Entity,
     },
     Repositories,
 };
@@ -49,7 +47,7 @@ impl EntityService {
             .observe::<CreateEntityEvent>(Box::new(move |event_any| {
                 if let Some(event) = event_any.downcast_ref::<CreateEntityEvent>() {
                     if let Ok(mut temp_self) = self_ptr_clone.lock() {
-                        temp_self.create_entity(event.entity.clone());
+                        temp_self.create_entity(&event.entity);
                     }
                 }
             }));
@@ -68,8 +66,11 @@ impl EntityService {
         */
     }
 
-    fn create_entity(&mut self, entity: Box<dyn Entity>) {
-        entity.load(self.repositories.get_entity_repository(), self.async_sender.clone());
+    fn create_entity(&mut self, entity: &Box<dyn Entity>) {
+        entity.load(
+            self.repositories.get_entity_repository(),
+            self.async_sender.clone(),
+        );
     }
 
     /*

@@ -1,12 +1,10 @@
-use glam::Vec3;
-
 use crate::{
     engine::{
         event_bus::event_bus::EventBus,
         services::vulkan_service::vulkan_events::{
             CreateVulkanInstanceEvent, VulkanCreateObjectEvent, VulkanDrawEvent,
         },
-        utils::structs::transform::Transform,
+        utils::structs::{repositories::Repositories, transform::Transform},
         vulkan::{structs::vertex::Vertex, vulkan_container::VulkanContainer},
     },
     widget,
@@ -17,6 +15,7 @@ use std::{
 };
 
 pub struct VulkanService {
+    repositories: Arc<Repositories>,
     vulkan_container: Option<Arc<Mutex<VulkanContainer>>>,
     event_bus_ptr: Arc<EventBus>,
     last_framecheck: Instant,
@@ -26,8 +25,12 @@ pub struct VulkanService {
 }
 
 impl VulkanService {
-    pub fn new(event_bus_ptr: Arc<EventBus>) -> Arc<Mutex<VulkanService>> {
+    pub fn new(
+        repositories: Arc<Repositories>,
+        event_bus_ptr: Arc<EventBus>,
+    ) -> Arc<Mutex<VulkanService>> {
         let vulkan_service = Arc::new(Mutex::new(VulkanService {
+            repositories,
             vulkan_container: Default::default(),
             event_bus_ptr,
             last_framecheck: Instant::now(),
@@ -68,7 +71,7 @@ impl VulkanService {
             .observe::<VulkanDrawEvent>(Box::new(move |event_any| {
                 if let Some(event) = event_any.downcast_ref::<VulkanDrawEvent>() {
                     if let Ok(mut vulkan) = self_ptr_clone.lock() {
-                        vulkan.draw_frame(&event.viewport_location, &event.viewport_rotation);
+                        vulkan.draw_frame(event.player_id);
                         let _ = event
                             .confirmation_sender
                             .lock()
@@ -101,13 +104,17 @@ impl VulkanService {
         self.vulkan_container = Some(vulkan_container);
     }
 
-    fn draw_frame(&mut self, viewport_location: &Vec3, viewport_rotation: &Vec3) {
+    fn draw_frame(&mut self, player_id: i16) {
+        let camera_transform = self
+            .repositories
+            .get_entity_repository()
+            .get_camera_transform(player_id);
         self.vulkan_container
             .as_mut()
             .unwrap()
             .lock()
             .unwrap()
-            .draw_frame(viewport_location, viewport_rotation);
+            .draw_frame(camera_transform);
 
         self.frame_count += 1;
         let elapsed = self.last_framecheck.elapsed();

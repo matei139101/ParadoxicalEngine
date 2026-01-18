@@ -711,13 +711,13 @@ impl VulkanContainer {
         builder.build().unwrap()
     }
 
-    pub fn draw_frame(&mut self, camera_location: &Vec3, camera_rotation: &Vec3) {
+    pub fn draw_frame(&mut self, camera_transform: Transform) {
         let (image_index, _, acquire_future) =
             swapchain::acquire_next_image(self.swapchain.clone(), None).unwrap();
         let view_projection = VulkanContainer::make_view_projection(
             self.viewports[0].extent[0] / self.viewports[0].extent[1],
-            camera_location,
-            camera_rotation,
+            &camera_transform.get_position(),
+            &camera_transform.get_rotation(),
         );
 
         let command_buffer =

@@ -1,4 +1,7 @@
-use crate::{prelude::*, resources::entities::base_cube::BaseCube};
+use crate::{
+    prelude::*,
+    resources::entities::{base_controller::BaseController, base_cube::BaseCube},
+};
 use glam::vec3;
 use std::{
     any::Any,
@@ -15,7 +18,7 @@ use winit::{
 
 use crate::engine::{
     services::{
-        entity_service::{entity_events::CreateEntityEvent},
+        entity_service::entity_events::CreateEntityEvent,
         vulkan_service::vulkan_events::{CreateVulkanInstanceEvent, VulkanDrawEvent},
     },
     utils::structs::transform::Transform,
@@ -74,6 +77,7 @@ impl ApplicationHandler for App {
         //For testing purposes
         let cube1_transform = Transform::new(vec3(-1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0));
         let cube2_transform = Transform::new(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0));
+        let controller_transform = Transform::new(vec3(0.0, 0.0, -5.0), vec3(0.0, 0.0, 0.0));
 
         let _ = self.async_sender.send(Box::new(CreateEntityEvent {
             entity: Box::new(BaseCube::new("Base cube 1".to_string(), cube1_transform)),
@@ -81,6 +85,14 @@ impl ApplicationHandler for App {
 
         let _ = self.async_sender.send(Box::new(CreateEntityEvent {
             entity: Box::new(BaseCube::new("Base cube 2".to_string(), cube2_transform)),
+        }));
+
+        let _ = self.async_sender.send(Box::new(CreateEntityEvent {
+            entity: Box::new(BaseController::new(
+                "Player 1".to_string(),
+                controller_transform,
+                1,
+            )),
         }));
 
         //[TO-DO]: Locking the mouse for now. Needs to be thought over if it's meant to be here or elsewhere.
@@ -102,8 +114,7 @@ impl ApplicationHandler for App {
             WindowEvent::RedrawRequested => {
                 let (confirmation_sender, confirmation_receiver) = oneshot::channel::<()>();
                 let draw_message = Box::new(VulkanDrawEvent {
-                    viewport_location: vec3(0.0, 0.0, -5.0),
-                    viewport_rotation: vec3(0.0, 0.0, 0.0),
+                    player_id: 1,
                     confirmation_sender: Arc::new(Mutex::new(Some(confirmation_sender))),
                 });
 

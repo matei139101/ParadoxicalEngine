@@ -3,9 +3,13 @@ use std::{any::Any, sync::Arc};
 use glam::{vec2, vec3};
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::engine::{repositories::entity_repository::EntityRepository, services::vulkan_service::vulkan_events::VulkanCreateObjectEvent, utils::structs::{entity::Entity, model::Model, transform::Transform}, vulkan::structs::vertex::Vertex};
+use crate::engine::{
+    repositories::entity_repository::EntityRepository,
+    services::vulkan_service::vulkan_events::VulkanCreateObjectEvent,
+    utils::structs::{entity::Entity, model::Model, transform::Transform},
+    vulkan::structs::vertex::Vertex,
+};
 
-#[derive(Clone)]
 pub struct BaseCube {
     name: String,
     transform: Transform,
@@ -15,7 +19,7 @@ pub struct BaseCube {
 
 impl BaseCube {
     pub fn new(name: String, transform: Transform) -> BaseCube {
-        BaseCube { 
+        BaseCube {
             name,
             transform,
             model: Model::new(vec![
@@ -212,7 +216,11 @@ impl BaseCube {
 }
 
 impl Entity for BaseCube {
-    fn load(&self, repository: Arc<EntityRepository>, async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>) {
+    fn load(
+        &self,
+        repository: Arc<EntityRepository>,
+        async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+    ) {
         let id = repository.get_id();
         repository.add_entity(id, self.name.clone());
         repository.add_transform(id, self.transform.clone());

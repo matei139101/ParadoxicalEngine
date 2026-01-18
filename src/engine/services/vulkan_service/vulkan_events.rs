@@ -1,6 +1,5 @@
 use std::sync::{Arc, Mutex};
 
-use glam::Vec3;
 use tokio::sync::oneshot;
 
 use crate::engine::{
@@ -13,8 +12,7 @@ pub struct CreateVulkanInstanceEvent {
 }
 
 pub struct VulkanDrawEvent {
-    pub viewport_location: Vec3,
-    pub viewport_rotation: Vec3,
+    pub player_id: i16,
     pub confirmation_sender: Arc<Mutex<Option<oneshot::Sender<()>>>>,
 }
 

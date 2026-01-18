@@ -57,7 +57,7 @@ fn make_services(
     ThreadSafe<InputService>,
 ) {
     (
-        VulkanService::new(event_bus_ptr.clone()),
+        VulkanService::new(repositories.clone(), event_bus_ptr.clone()),
         EntityService::new(
             repositories.clone(),
             event_bus_ptr.clone(),
