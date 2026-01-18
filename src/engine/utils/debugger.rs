@@ -15,10 +15,11 @@ use tokio::runtime::Runtime;
 
 #[derive(Debug, Eq, PartialEq, PartialOrd)]
 pub enum LogLevel {
-    //Low = 1,
+    Low = 1,
     //Medium = 2,
     High = 3,
     Dev = 4,
+    Critical = 5,
 }
 
 pub struct Debugger {
@@ -152,15 +153,11 @@ impl Debugger {
     fn update_widgets(&self) {
         execute!(stdout(), MoveTo(0, 3),).unwrap();
 
-        let fps_value = self
-            .widgets
-            .lock()
-            .unwrap()
-            .get("FPS")
-            .map(|arc_rwlock| *arc_rwlock.read().unwrap()) // read the value if it exists
-            .unwrap_or(0.0); // default if not found
-                             //
-        print!("FPS:{}", fps_value);
+        let widgets = self.widgets.lock().unwrap();
+        for (key, value) in widgets.iter() {
+            print!("{} : {} | ", key, value.read().unwrap())
+        }
+
         self.move_cursor_to_bottom();
     }
 

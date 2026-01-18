@@ -1,12 +1,15 @@
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::engine::{
-    event_bus::event_bus::EventBus,
-    repositories::entity_repository::EntityRepository,
-    services::{
-        entity_service::{entities::entity::Entity, entity_events::CreateEntityEvent},
-        vulkan_service::vulkan_events::VulkanCreateObjectEvent,
+use crate::{
+    engine::{
+        event_bus::event_bus::EventBus,
+        repositories::entity_repository::EntityRepository,
+        services::{
+            entity_service::{entities::entity::Entity, entity_events::CreateEntityEvent},
+            vulkan_service::vulkan_events::VulkanCreateObjectEvent,
+        },
     },
+    Repositories,
 };
 use std::{
     any::Any,
@@ -14,18 +17,19 @@ use std::{
 };
 
 pub struct EntityService {
-    entity_repository: EntityRepository,
+    repositories: Arc<Repositories>,
     event_bus_ptr: Arc<EventBus>,
     async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
 }
 
 impl EntityService {
     pub fn new(
+        repositories: Arc<Repositories>,
         event_bus_ptr: Arc<EventBus>,
         async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
     ) -> Arc<Mutex<Self>> {
         let entity_service = Arc::new(Mutex::new(EntityService {
-            entity_repository: EntityRepository::new(),
+            repositories,
             event_bus_ptr: event_bus_ptr.clone(),
             async_sender,
         }));
@@ -68,11 +72,15 @@ impl EntityService {
 
     fn create_entity(&mut self, entity: Box<dyn Entity>) {
         let object_transform = entity.get_transform().clone();
-        let entity_id = self.entity_repository.add_entity(entity.clone());
+
+        let entity_id = self
+            .repositories
+            .get_entity_repository()
+            .add_entity(entity.clone());
 
         if let Some(render_entity) = entity.as_rendered_model() {
             let vulkan_event = VulkanCreateObjectEvent {
-                object_id: *entity_id,
+                object_id: entity_id,
                 vertices: render_entity.get_model().get_model().to_vec(),
                 object_transform,
                 texture_path: render_entity.get_texture(),

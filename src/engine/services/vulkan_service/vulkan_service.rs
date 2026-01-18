@@ -21,6 +21,7 @@ pub struct VulkanService {
     event_bus_ptr: Arc<EventBus>,
     last_framecheck: Instant,
     frame_count: u32,
+
     fps: Arc<RwLock<f32>>,
 }
 

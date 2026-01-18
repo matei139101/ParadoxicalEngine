@@ -26,14 +26,19 @@ pub struct App {
     window: Option<Arc<Window>>,
     viewport_info: Option<ViewportInfo>,
     async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+    input_sender: UnboundedSender<DeviceEvent>,
 }
 
 impl App {
-    pub fn new(async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>) -> Self {
+    pub fn new(
+        async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+        input_sender: UnboundedSender<DeviceEvent>,
+    ) -> Self {
         App {
             window: Default::default(),
             viewport_info: Default::default(),
             async_sender,
+            input_sender,
         }
     }
 }
@@ -131,10 +136,6 @@ impl ApplicationHandler for App {
         _device_id: DeviceId,
         event: DeviceEvent,
     ) {
-        match event {
-            DeviceEvent::MouseMotion { delta: _ } => {}
-            DeviceEvent::MouseWheel { delta: _ } => {}
-            _ => {}
-        }
+        let _ = self.input_sender.send(event);
     }
 }
