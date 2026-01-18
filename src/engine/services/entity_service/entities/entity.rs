@@ -3,7 +3,7 @@ use std::any::Any;
 use dyn_clone::DynClone;
 
 use crate::engine::{
-    components::entity_component::entity_traits::{
+    services::entity_service::entity_traits::{
         player_controller::PlayerController, rendered_model::RenderedModel,
     },
     utils::structs::transform::Transform,

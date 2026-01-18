@@ -1,7 +1,7 @@
 use glam::{vec2, vec3};
 
 use crate::engine::{
-    components::entity_component::{
+    services::entity_service::{
         entities::entity::Entity, entity_traits::rendered_model::RenderedModel,
     },
     utils::structs::{model::Model, transform::Transform},

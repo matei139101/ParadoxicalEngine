@@ -1,26 +1,35 @@
-use std::collections::HashMap;
+use crate::prelude::*;
+use std::{collections::HashMap, sync::RwLock};
 
-use crate::engine::components::entity_component::entities::entity::Entity;
-
+use crate::engine::services::entity_service::entities::entity::Entity;
 pub struct EntityRepository {
-    entities: HashMap<usize, Box<dyn Entity>>,
-    unused_id: usize,
+    entities: RwLock<HashMap<usize, Box<dyn Entity>>>,
+    last_id: RwLock<usize>,
 }
 
 impl EntityRepository {
-    pub fn new() -> Self {
+    pub fn new() -> EntityRepository {
         EntityRepository {
-            entities: HashMap::new(),
-            unused_id: 0,
+            entities: RwLock::new(HashMap::new()),
+            last_id: RwLock::new(0),
         }
     }
 
-    pub fn add_entity(&mut self, entity: Box<dyn Entity>) -> &usize {
-        //[TO-DO]: Add some error checking or logging
-        self.entities.insert(self.unused_id, entity);
-        self.unused_id += 1;
+    pub fn add_entity(&self, entity: Box<dyn Entity>) -> usize {
+        if let Ok(entity_id) = self.last_id.write() {
+            let entity_id = *entity_id + 1;
 
-        &self.unused_id
+            if let Ok(mut entities) = self.entities.write() {
+                entities.insert(entity_id, entity);
+                entity_id
+            } else {
+                log!(Self, Critical, "Failed to writelock entities...");
+                panic!()
+            }
+        } else {
+            log!(Self, Critical, "Failed to writelock last_id...");
+            panic!()
+        }
     }
 
     /*
