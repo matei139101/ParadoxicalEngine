@@ -14,8 +14,8 @@ use crate::engine::{
     app::App,
     event_bus::event_bus::EventBus,
     services::{
-        entity_service::entity_service::EntityService, input_service::input_service::InputService,
-        vulkan_service::vulkan_service::VulkanService,
+        entity_service::EntityService, input_service::InputService,
+        vulkan_service::VulkanService,
     },
     utils::structs::repositories::Repositories,
 };
