@@ -3,11 +3,13 @@ use std::{any::Any, sync::Arc};
 use glam::{vec2, vec3};
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::engine::{
-    repositories::entity_repository::EntityRepository,
-    services::vulkan_service::vulkan_events::VulkanCreateObjectEvent,
-    utils::structs::{entity::Entity, model::Model, transform::Transform},
-    vulkan::structs::vertex::Vertex,
+use crate::{
+    engine::{
+        repositories::entity_repository::EntityRepository,
+        utils::structs::{entity::Entity, model::Model, transform::Transform},
+        vulkan::structs::vertex::Vertex,
+    },
+    resources::events::vulkan_events::VulkanCreateObjectEvent,
 };
 
 pub struct BaseCube {

@@ -4,7 +4,7 @@ use glam::bool;
 use std::{collections::HashMap, sync::RwLock};
 
 pub struct InputRepository {
-    keymaps: RwLock<HashMap<&'static str, bool>>,
+    // keymaps: RwLock<HashMap<&'static str, bool>>,
     axismaps: RwLock<HashMap<&'static str, RwLock<f64>>>,
 }
 
@@ -21,7 +21,7 @@ impl InputRepository {
         axismaps.insert("RIGHT", RwLock::new(0.0));
 
         InputRepository {
-            keymaps: RwLock::new(keymaps),
+            // keymaps: RwLock::new(keymaps),
             axismaps: RwLock::new(axismaps),
         }
     }

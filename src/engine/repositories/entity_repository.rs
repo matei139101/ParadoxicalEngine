@@ -1,9 +1,6 @@
 use glam::vec3;
 
-use crate::{
-    engine::utils::structs::transform::{self, Transform},
-    prelude::*,
-};
+use crate::{engine::utils::structs::transform::Transform, prelude::*};
 use core::panic;
 use std::{collections::HashMap, sync::RwLock};
 

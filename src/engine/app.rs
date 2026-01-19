@@ -1,6 +1,12 @@
 use crate::{
     prelude::*,
-    resources::entities::{base_controller::BaseController, base_cube::BaseCube},
+    resources::{
+        entities::{base_controller::BaseController, base_cube::BaseCube},
+        events::{
+            entity_events::CreateEntityEvent,
+            vulkan_events::{CreateVulkanInstanceEvent, VulkanDrawEvent},
+        },
+    },
 };
 use glam::vec3;
 use std::{
@@ -17,10 +23,6 @@ use winit::{
 };
 
 use crate::engine::{
-    services::{
-        entity_service::entity_events::CreateEntityEvent,
-        vulkan_service::vulkan_events::{CreateVulkanInstanceEvent, VulkanDrawEvent},
-    },
     utils::structs::transform::Transform,
     vulkan::{structs::viewport::ViewportInfo, vulkan_container::VulkanContainer},
 };

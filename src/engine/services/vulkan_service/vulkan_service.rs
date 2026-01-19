@@ -1,11 +1,11 @@
 use crate::{
     engine::{
         event_bus::event_bus::EventBus,
-        services::vulkan_service::vulkan_events::{
-            CreateVulkanInstanceEvent, VulkanCreateObjectEvent, VulkanDrawEvent,
-        },
         utils::structs::{repositories::Repositories, transform::Transform},
         vulkan::{structs::vertex::Vertex, vulkan_container::VulkanContainer},
+    },
+    resources::events::vulkan_events::{
+        CreateVulkanInstanceEvent, VulkanCreateObjectEvent, VulkanDrawEvent,
     },
     widget,
 };

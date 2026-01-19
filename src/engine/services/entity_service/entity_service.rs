@@ -1,10 +1,8 @@
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
-    engine::{
-        event_bus::event_bus::EventBus, services::entity_service::entity_events::CreateEntityEvent,
-        utils::structs::entity::Entity,
-    },
+    engine::{event_bus::event_bus::EventBus, utils::structs::entity::Entity},
+    resources::events::entity_events::CreateEntityEvent,
     Repositories,
 };
 use std::{
