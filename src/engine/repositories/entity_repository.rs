@@ -1,8 +1,5 @@
-use glam::vec3;
-
-use crate::{engine::utils::structs::transform::Transform, prelude::*};
-use core::panic;
-use std::{collections::HashMap, sync::RwLock};
+use crate::prelude::*;
+use std::panic;
 
 pub struct EntityRepository {
     entities: RwLock<HashMap<usize, RwLock<String>>>,
@@ -15,7 +12,7 @@ impl EntityRepository {
     pub fn new() -> EntityRepository {
         EntityRepository {
             entities: Default::default(),
-            transforms: Default::default(),
+transforms: Default::default(),
             controllers: Default::default(),
             last_id: RwLock::new(0),
         }
@@ -90,8 +87,8 @@ impl EntityRepository {
                 &format!("No entity found with player id: {}", player_id).to_string()
             );
             Transform {
-                position: vec3(0.0, 0.0, -5.0),
-                rotation: vec3(0.0, 0.0, 0.0),
+                position: Vec3::new(0.0, 0.0, -5.0),
+                rotation: Vec3::new(0.0, 0.0, 0.0),
             }
         } else {
             log!(Self, Critical, "Failed to readlock controllers...");

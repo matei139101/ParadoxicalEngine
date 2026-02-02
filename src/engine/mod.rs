@@ -1,5 +1,5 @@
 pub mod app;
-pub mod event_bus;
+pub mod systems;
 pub mod repositories;
 pub mod services;
 pub mod utils;

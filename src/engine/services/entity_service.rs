@@ -1,14 +1,5 @@
-use tokio::sync::mpsc::UnboundedSender;
-
-use crate::{
-    engine::{event_bus::event_bus::EventBus, utils::structs::entity::Entity},
-    resources::events::entity_events::CreateEntityEvent,
-    Repositories,
-};
-use std::{
-    any::Any,
-    sync::{Arc, Mutex},
-};
+use crate::prelude::*;
+use crate::resources::events::entity_events::CreateEntityEvent;
 
 pub struct EntityService {
     repositories: Arc<Repositories>,

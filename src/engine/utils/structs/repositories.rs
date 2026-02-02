@@ -1,8 +1,4 @@
-use std::sync::Arc;
-
-use crate::engine::repositories::{
-    entity_repository::EntityRepository, input_repository::InputRepository,
-};
+use crate::prelude::*;
 
 pub struct Repositories {
     input_repository: Arc<InputRepository>,

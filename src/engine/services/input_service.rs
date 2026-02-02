@@ -1,12 +1,4 @@
-use crate::Repositories;
-use std::{
-    sync::{Arc, Mutex},
-    thread,
-};
-
-use tokio::sync::mpsc;
-use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
-use winit::event::DeviceEvent;
+use crate::prelude::*;
 
 pub struct InputService {
     repositories: Arc<Repositories>,
@@ -15,7 +7,7 @@ pub struct InputService {
 impl InputService {
     pub fn new(
         repositories: Arc<Repositories>,
-        input_reciever: mpsc::UnboundedReceiver<DeviceEvent>,
+        input_reciever: UnboundedReceiver<DeviceEvent>,
     ) -> Arc<Mutex<InputService>> {
         let input_service = InputService { repositories };
         input_service.run(input_reciever);
@@ -23,7 +15,7 @@ impl InputService {
         Arc::new(Mutex::new(input_service))
     }
 
-    fn run(&self, input_reciever: mpsc::UnboundedReceiver<DeviceEvent>) {
+    fn run(&self, input_reciever: UnboundedReceiver<DeviceEvent>) {
         let mut stream = UnboundedReceiverStream::new(input_reciever);
         let input_repo = self.repositories.get_input_repository();
 

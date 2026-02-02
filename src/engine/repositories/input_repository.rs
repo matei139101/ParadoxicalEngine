@@ -1,7 +1,4 @@
 use crate::prelude::*;
-use core::f64;
-use glam::bool;
-use std::{collections::HashMap, sync::RwLock};
 
 pub struct InputRepository {
     // keymaps: RwLock<HashMap<&'static str, bool>>,

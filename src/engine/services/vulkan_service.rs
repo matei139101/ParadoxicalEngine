@@ -1,18 +1,9 @@
-use crate::{
-    engine::{
-        event_bus::event_bus::EventBus,
-        utils::structs::{repositories::Repositories, transform::Transform},
-        vulkan::{structs::vertex::Vertex, vulkan_container::VulkanContainer},
-    },
-    resources::events::vulkan_events::{
+use crate::engine::vulkan::structs::vertex::Vertex;
+use crate::{prelude::*, widget};
+use crate::engine::vulkan::vulkan_container::VulkanContainer;
+use crate::resources::events::vulkan_events::{
         CreateVulkanInstanceEvent, VulkanCreateObjectEvent, VulkanDrawEvent,
-    },
-    widget,
-};
-use std::{
-    sync::{Arc, Mutex, RwLock},
-    time::{Duration, Instant},
-};
+    };
 
 pub struct VulkanService {
     repositories: Arc<Repositories>,

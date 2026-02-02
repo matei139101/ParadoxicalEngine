@@ -1,16 +1,6 @@
-use std::{any::Any, sync::Arc};
+use glam::Vec2;
 
-use glam::{vec2, vec3};
-use tokio::sync::mpsc::UnboundedSender;
-
-use crate::{
-    engine::{
-        repositories::entity_repository::EntityRepository,
-        utils::structs::{entity::Entity, model::Model, transform::Transform},
-        vulkan::structs::vertex::Vertex,
-    },
-    resources::events::vulkan_events::VulkanCreateObjectEvent,
-};
+use crate::{engine::vulkan::structs::vertex::Vertex, prelude::*, resources::events::vulkan_events::VulkanCreateObjectEvent};
 
 pub struct BaseCube {
     name: String,
@@ -27,189 +17,189 @@ impl BaseCube {
             model: Model::new(vec![
                 // Front face (+Z)
                 Vertex::new(
-                    vec3(-0.5, -0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 0.0),
+                    Vec3::new(-0.5, -0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 0.0),
                 ), // bottom-left
                 Vertex::new(
-                    vec3(0.5, 0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(0.5, 0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ), // top-right
                 Vertex::new(
-                    vec3(0.5, -0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 0.0),
+                    Vec3::new(0.5, -0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 0.0),
                 ), // bottom-right
                 Vertex::new(
-                    vec3(-0.5, -0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 0.0),
+                    Vec3::new(-0.5, -0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 0.0),
                 ), // bottom-left
                 Vertex::new(
-                    vec3(-0.5, 0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 0.0),
+                    Vec3::new(-0.5, 0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 0.0),
                 ), // top-left
                 Vertex::new(
-                    vec3(0.5, 0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(0.5, 0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ), // top-right
                 // Back face (-Z)
                 Vertex::new(
-                    vec3(0.5, -0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 1.0),
+                    Vec3::new(0.5, -0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 1.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, 0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 0.0),
+                    Vec3::new(0.5, 0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, -0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(-0.5, -0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, -0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 1.0),
+                    Vec3::new(-0.5, -0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 1.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, 0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 0.0),
+                    Vec3::new(0.5, 0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, 0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(-0.5, 0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ),
                 // Left face (-X)
                 Vertex::new(
-                    vec3(-0.5, -0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 0.0),
+                    Vec3::new(-0.5, -0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, 0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(-0.5, 0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, -0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 0.0),
+                    Vec3::new(-0.5, -0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, -0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 0.0),
+                    Vec3::new(-0.5, -0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, 0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 0.0),
+                    Vec3::new(-0.5, 0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, 0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(-0.5, 0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ),
                 // Right face (+X)
                 Vertex::new(
-                    vec3(0.5, -0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 0.0),
+                    Vec3::new(0.5, -0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, 0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(0.5, 0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, -0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 0.0),
+                    Vec3::new(0.5, -0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, -0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 0.0),
+                    Vec3::new(0.5, -0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, 0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 0.0),
+                    Vec3::new(0.5, 0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, 0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(0.5, 0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ),
                 // Top face (+Y)
                 Vertex::new(
-                    vec3(-0.5, 0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 0.0),
+                    Vec3::new(-0.5, 0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, 0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(0.5, 0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, 0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 0.0),
+                    Vec3::new(0.5, 0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, 0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 0.0),
+                    Vec3::new(-0.5, 0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, 0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 0.0),
+                    Vec3::new(-0.5, 0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, 0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(0.5, 0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ),
                 // Bottom face (-Y)
                 Vertex::new(
-                    vec3(-0.5, -0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 0.0),
+                    Vec3::new(-0.5, -0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, -0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(0.5, -0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, -0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 0.0),
+                    Vec3::new(0.5, -0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, -0.5, -0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(0.0, 0.0),
+                    Vec3::new(-0.5, -0.5, -0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(0.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(-0.5, -0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 0.0),
+                    Vec3::new(-0.5, -0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 0.0),
                 ),
                 Vertex::new(
-                    vec3(0.5, -0.5, 0.5),
-                    vec3(255.0, 255.0, 255.0),
-                    vec2(1.0, 1.0),
+                    Vec3::new(0.5, -0.5, 0.5),
+                    Vec3::new(255.0, 255.0, 255.0),
+                    Vec2::new(1.0, 1.0),
                 ),
             ]),
             texture_path: "src/engine/vulkan/base_resources/default_texture.png".to_string(),
