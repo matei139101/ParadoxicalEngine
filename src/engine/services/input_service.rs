@@ -7,16 +7,16 @@ pub struct InputService {
 impl InputService {
     pub fn new(
         repositories: Arc<Repositories>,
-        input_reciever: UnboundedReceiver<DeviceEvent>,
+        input_receiver: UnboundedReceiver<DeviceEvent>,
     ) -> Arc<Mutex<InputService>> {
         let input_service = InputService { repositories };
-        input_service.run(input_reciever);
+        input_service.run(input_receiver);
 
         Arc::new(Mutex::new(input_service))
     }
 
-    fn run(&self, input_reciever: UnboundedReceiver<DeviceEvent>) {
-        let mut stream = UnboundedReceiverStream::new(input_reciever);
+    fn run(&self, input_receiver: UnboundedReceiver<DeviceEvent>) {
+        let mut stream = UnboundedReceiverStream::new(input_receiver);
         let input_repo = self.repositories.get_input_repository();
 
         thread::spawn(move || {

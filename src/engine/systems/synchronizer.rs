@@ -1,17 +1,30 @@
-/*
+use std::thread::JoinHandle;
+
 use crate::prelude::*;
 
-use tokio::sync::mpsc::UnboundedSender;
-
-use crate::engine::event_bus::event_bus::EventBus;
-
 pub struct Synchronizer {
-    event_bus_ptr: Arc<EventBus>,
-    async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+    services: Arc<Services>,
 }
 
 impl Synchronizer {
-    pub fn new(        event_bus_ptr: Arc<EventBus>,
-        async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,)
+    pub fn new(services: Arc<Services>) -> Synchronizer {
+        Synchronizer { services }
+    }
+
+    pub fn start(&self) -> JoinHandle<()> {
+        let services = Arc::clone(&self.services);
+        log!(Self, High, "KLANKERRRRR");
+
+        thread::spawn(move || {
+            loop {
+                log!(Self, High, "HEEEEEEELP!");
+                if let Ok(mut vulkan_service) = services.get_vulkan_service().lock() {
+                    vulkan_service.update();
+                } else {
+                    panic!("Couldn't lock vulkan service for updating...");
+                }
+                log!(Self, High, "I dont know");
+            }
+        })
+    }
 }
-*/

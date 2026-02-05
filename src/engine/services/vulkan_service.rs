@@ -59,24 +59,6 @@ impl VulkanService {
         let self_ptr_clone = self_ptr.clone();
         bus_arc
             .clone()
-            .observe::<VulkanDrawEvent>(Box::new(move |event_any| {
-                if let Some(event) = event_any.downcast_ref::<VulkanDrawEvent>() {
-                    if let Ok(mut vulkan) = self_ptr_clone.lock() {
-                        vulkan.draw_frame(event.player_id);
-                        let _ = event
-                            .confirmation_sender
-                            .lock()
-                            .unwrap()
-                            .take()
-                            .unwrap()
-                            .send(());
-                    }
-                }
-            }));
-
-        let self_ptr_clone = self_ptr.clone();
-        bus_arc
-            .clone()
             .observe::<VulkanCreateObjectEvent>(Box::new(move |event_any| {
                 if let Some(event) = event_any.downcast_ref::<VulkanCreateObjectEvent>() {
                     if let Ok(mut vulkan) = self_ptr_clone.lock() {
@@ -132,7 +114,11 @@ impl VulkanService {
             .create_vulkan_object(object_id, vertices, object_transform, texture_path);
     }
 
-    /*:w
+    pub fn update(&mut self) {
+        self.draw_frame(1);
+    }
+
+    /*
 
     fn resize_viewport(&mut self, event_info: &ViewportResizeInfo) {
         self.vulkan_container

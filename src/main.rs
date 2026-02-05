@@ -10,40 +10,14 @@ fn main() {
     let event_bus = EventBus::new();
 
     let repositories: Arc<Repositories> = Arc::new(Repositories::new());
-
-    make_services(
-        repositories.clone(),
-        event_bus.clone(),
-        async_sender.clone(),
-        input_receiver,
-    );
-
+    let services: Arc<Services> = Arc::new(Services::new(repositories, event_bus.clone(), async_sender.clone(), input_receiver));
     let app = make_app(async_sender.clone(), input_sender.clone());
 
+
+    let synchronizer = Synchronizer::new(services);
+    let synchronizer_handle = synchronizer.start();
     start_event_bus_thread(event_bus, async_receiver);
     start_window_thread(app);
-}
-
-type ThreadSafe<T> = Arc<Mutex<T>>;
-fn make_services(
-    repositories: Arc<Repositories>,
-    event_bus_ptr: Arc<EventBus>,
-    async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-    input_receiver: UnboundedReceiver<DeviceEvent>,
-) -> (
-    ThreadSafe<VulkanService>,
-    ThreadSafe<EntityService>,
-    ThreadSafe<InputService>,
-) {
-    (
-        VulkanService::new(repositories.clone(), event_bus_ptr.clone()),
-        EntityService::new(
-            repositories.clone(),
-            event_bus_ptr.clone(),
-            async_sender.clone(),
-        ),
-        InputService::new(repositories.clone(), input_receiver),
-    )
 }
 
 fn make_app(

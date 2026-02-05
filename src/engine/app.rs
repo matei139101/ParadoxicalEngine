@@ -4,7 +4,7 @@ use crate::{
         entities::{base_controller::BaseController, base_cube::BaseCube},
         events::{
             entity_events::CreateEntityEvent,
-            vulkan_events::{CreateVulkanInstanceEvent, VulkanDrawEvent},
+            vulkan_events::{CreateVulkanInstanceEvent},
         },
     },
 };
@@ -13,7 +13,7 @@ use std::{
     any::Any,
     sync::{Arc, Mutex},
 };
-use tokio::sync::{mpsc::UnboundedSender, oneshot};
+use tokio::sync::{mpsc::UnboundedSender};
 use winit::{
     application::ApplicationHandler,
     event::{DeviceEvent, DeviceId, WindowEvent},
@@ -114,15 +114,6 @@ impl ApplicationHandler for App {
                 event_loop.exit();
             }
             WindowEvent::RedrawRequested => {
-                let (confirmation_sender, confirmation_receiver) = oneshot::channel::<()>();
-                let draw_message = Box::new(VulkanDrawEvent {
-                    player_id: 1,
-                    confirmation_sender: Arc::new(Mutex::new(Some(confirmation_sender))),
-                });
-
-                let _ = self.async_sender.send(draw_message);
-                confirmation_receiver.blocking_recv().unwrap();
-
                 self.window.as_ref().unwrap().request_redraw();
             }
 
