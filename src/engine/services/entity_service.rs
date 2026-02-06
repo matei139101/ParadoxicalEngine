@@ -40,19 +40,6 @@ impl EntityService {
                     }
                 }
             }));
-
-        /*
-        let self_ptr_clone = self_ptr.clone();
-        bus_arc
-            .clone()
-            .observe::<DeleteEntityEvent>(Box::new(move |event_any| {
-                if let Some(event) = event_any.downcast_ref::<DeleteEntityEvent>() {
-                    if let Ok(mut temp_self) = self_ptr_clone.lock() {
-                        temp_self.delete_entity(&event.entity_id);
-                    }
-                }
-            }));
-        */
     }
 
     fn create_entity(&mut self, entity: &Box<dyn Entity>) {
@@ -62,15 +49,45 @@ impl EntityService {
         );
     }
 
-    /*
-    fn delete_entity(&mut self, entity_id: &usize) {
-        self.entity_repository.remove_entity(entity_id);
+    pub fn update(&mut self) {
+        if let Some(player_entity_id) = self
+            .repositories
+            .get_entity_repository()
+            .get_player_controller(1)
+        {
+            if let Some(mut transform) = self
+                .repositories
+                .get_entity_repository()
+                .get_transform(player_entity_id)
+            {
+                if let Some(input_y) = self.repositories.get_input_repository().get_axis("CAMERAY")
+                {
+                    transform.offset_y_rotation(input_y * 0.0025);
+                } else {
+                    log!(Self, Critical, "Failed to update camera transform...");
+                }
 
-        let vulkan_delete_event = VulkanDeleteObjectEvent {
-            object_id: *entity_id,
-        };
+                if let Some(input_x) = self.repositories.get_input_repository().get_axis("CAMERAX")
+                {
+                    transform.offset_x_rotation(input_x * -0.0025);
+                    self.repositories
+                        .get_entity_repository()
+                        .set_transform(player_entity_id, transform);
+                } else {
+                    log!(Self, Critical, "Failed to update camera transform...");
+                }
 
-        let _ = self.async_sender.send(Box::new(vulkan_delete_event));
+                self.repositories
+                    .get_input_repository()
+                    .set_axis("CAMERAY", 0f64);
+                self.repositories
+                    .get_input_repository()
+                    .set_axis("CAMERAX", 0f64);
+            } else {
+                log!(Self, Critical, "Failed to get player entity transform...");
+            }
+        } else {
+            log!(Self, Critical, "Failed to get player entity Id...");
+        }
     }
-    */
 }

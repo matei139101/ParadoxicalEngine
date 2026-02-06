@@ -1,6 +1,9 @@
 use glam::Vec2;
 
-use crate::{engine::vulkan::structs::vertex::Vertex, prelude::*, resources::events::vulkan_events::VulkanCreateObjectEvent};
+use crate::{
+    engine::vulkan::structs::vertex::Vertex, prelude::*,
+    resources::events::vulkan_events::VulkanCreateObjectEvent,
+};
 
 pub struct BaseCube {
     name: String,
@@ -213,17 +216,20 @@ impl Entity for BaseCube {
         repository: Arc<EntityRepository>,
         async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
     ) {
-        let id = repository.get_id();
-        repository.add_entity(id, self.name.clone());
-        repository.add_transform(id, self.transform.clone());
+        if let Some(id) = repository.get_id() {
+            repository.add_entity(id, self.name.clone());
+            repository.set_transform(id, self.transform.clone());
 
-        let vulkan_event = VulkanCreateObjectEvent {
-            object_id: id,
-            vertices: self.model.get_model().to_vec(),
-            object_transform: self.transform.clone(),
-            texture_path: self.texture_path.clone(),
-        };
+            let vulkan_event = VulkanCreateObjectEvent {
+                object_id: id,
+                vertices: self.model.get_model().to_vec(),
+                object_transform: self.transform.clone(),
+                texture_path: self.texture_path.clone(),
+            };
 
-        let _ = async_sender.send(Box::new(vulkan_event));
+            let _ = async_sender.send(Box::new(vulkan_event));
+        } else {
+            log!(Self, Critical, "Failed to get id for entity...");
+        }
     }
 }

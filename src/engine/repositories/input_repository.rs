@@ -23,17 +23,61 @@ impl InputRepository {
         }
     }
 
+    pub fn get_axis(&self, key: &'static str) -> Option<f64> {
+        if let Ok(axismaps) = self.axismaps.read() {
+            if let Some(axis) = axismaps.get(key) {
+                if let Ok(axis) = axis.read() {
+                    Some(*axis)
+                } else {
+                    log!(Self, Critical, "Faild to readlock axis...");
+                    None
+                }
+            } else {
+                log!(Self, Critical, "Failed to get axis...");
+                None
+            }
+        } else {
+            log!(Self, Critical, "Failed to readlock axismaps...");
+            None
+        }
+    }
+
     pub fn update_axis(&self, key: &'static str, value: f64) {
         if let Ok(axismaps) = self.axismaps.read() {
             if let Some(axis) = axismaps.get(key) {
                 if let Ok(mut axis) = axis.write() {
                     *axis += value;
-
+                    /*
                     log!(
                         Self,
                         Low,
                         &format!("Updated axis: {}. New value: {}", key, axis).to_string()
                     );
+                    */
+                } else {
+                    log!(Self, Critical, "Faild to writelock axis...");
+                }
+            } else {
+                log!(Self, Critical, "Failed to get axis...");
+            }
+        } else {
+            log!(Self, Critical, "Failed to readlock axismaps...");
+        }
+    }
+
+    pub fn set_axis(&self, key: &'static str, value: f64) {
+        if let Ok(axismaps) = self.axismaps.read() {
+            if let Some(axis) = axismaps.get(key) {
+                if let Ok(mut axis) = axis.write() {
+                    *axis = value;
+
+                    /*
+                    log!(
+                        Self,
+                        Low,
+                        &format!("Updated axis: {}. New value: {}", key, axis).to_string()
+                    );
+                    */
                 } else {
                     log!(Self, Critical, "Faild to writelock axis...");
                 }

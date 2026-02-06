@@ -10,9 +10,13 @@ fn main() {
     let event_bus = EventBus::new();
 
     let repositories: Arc<Repositories> = Arc::new(Repositories::new());
-    let services: Arc<Services> = Arc::new(Services::new(repositories, event_bus.clone(), async_sender.clone(), input_receiver));
+    let services: Arc<Services> = Arc::new(Services::new(
+        repositories,
+        event_bus.clone(),
+        async_sender.clone(),
+        input_receiver,
+    ));
     let app = make_app(async_sender.clone(), input_sender.clone());
-
 
     let synchronizer = Synchronizer::new(services);
     let synchronizer_handle = synchronizer.start();

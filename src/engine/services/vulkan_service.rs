@@ -1,9 +1,7 @@
 use crate::engine::vulkan::structs::vertex::Vertex;
-use crate::{prelude::*, widget};
 use crate::engine::vulkan::vulkan_container::VulkanContainer;
-use crate::resources::events::vulkan_events::{
-        CreateVulkanInstanceEvent, VulkanCreateObjectEvent, VulkanDrawEvent,
-    };
+use crate::resources::events::vulkan_events::{CreateVulkanInstanceEvent, VulkanCreateObjectEvent};
+use crate::{prelude::*, widget};
 
 pub struct VulkanService {
     repositories: Arc<Repositories>,
@@ -78,16 +76,23 @@ impl VulkanService {
     }
 
     fn draw_frame(&mut self, player_id: i16) {
-        let camera_transform = self
+        if let Some(camera_transform) = self
             .repositories
             .get_entity_repository()
-            .get_camera_transform(player_id);
-        self.vulkan_container
-            .as_mut()
-            .unwrap()
-            .lock()
-            .unwrap()
-            .draw_frame(camera_transform);
+            .get_camera_transform(player_id)
+        {
+            if let Some(vulkan_container) = self.vulkan_container.as_mut() {
+                if let Ok(mut vulkan_container) = vulkan_container.lock() {
+                    vulkan_container.draw_frame(camera_transform);
+                } else {
+                    log!(Self, High, "Failed to lock vulkan container...");
+                }
+            } else {
+                log!(Self, High, "Failed to unwrap vulkan container...");
+            }
+        } else {
+            log!(Self, High, "Failed to get camera transform...");
+        }
 
         self.frame_count += 1;
         let elapsed = self.last_framecheck.elapsed();

@@ -1,4 +1,5 @@
 use crate::engine::utils::structs::{entity::Entity, transform::Transform};
+use crate::prelude::*;
 
 pub struct BaseController {
     name: String,
@@ -24,9 +25,12 @@ impl Entity for BaseController {
         >,
         _async_sender: tokio::sync::mpsc::UnboundedSender<Box<dyn std::any::Any + Send + Sync>>,
     ) {
-        let id = repository.get_id();
-        repository.add_entity(id, self.name.clone());
-        repository.add_transform(id, self.transform.clone());
-        repository.add_controller(id, self.player_id);
+        if let Some(id) = repository.get_id() {
+            repository.add_entity(id, self.name.clone());
+            repository.set_transform(id, self.transform.clone());
+            repository.add_controller(id, self.player_id);
+        } else {
+            log!(Self, Critical, "Failed to get id for entity...");
+        }
     }
 }

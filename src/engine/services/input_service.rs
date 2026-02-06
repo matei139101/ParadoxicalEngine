@@ -24,8 +24,8 @@ impl InputService {
             async_runtime.block_on(async {
                 while let Some(input) = stream.next().await {
                     if let DeviceEvent::MouseMotion { delta } = input {
-                        input_repo.update_axis("CAMERAY", delta.1);
-                        input_repo.update_axis("CAMERAX", delta.0);
+                        input_repo.update_axis("CAMERAY", delta.0);
+                        input_repo.update_axis("CAMERAX", delta.1);
                     }
                 }
             });
