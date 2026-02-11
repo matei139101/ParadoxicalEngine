@@ -12,6 +12,7 @@ use crossterm::{
 use once_cell::sync::Lazy;
 use std::io::{stdout, Write};
 use tokio::runtime::Runtime;
+use crate::prelude::*;
 
 #[derive(Debug, Eq, PartialEq, PartialOrd)]
 pub enum LogLevel {
@@ -22,20 +23,38 @@ pub enum LogLevel {
     Critical = 5,
 }
 
+impl LogLevel {
+    pub fn from_string(string: String) -> LogLevel {
+        match string.to_uppercase().as_str() {
+            "LOW" => LogLevel::Low,
+            "MEDIUM" => LogLevel::Medium,
+            "HIGH" => LogLevel::High,
+            "DEV" => LogLevel::Dev,
+            "CRITICAL" => LogLevel::Critical,
+
+            _ => LogLevel::Low
+        }
+    }
+}
+
 pub struct Debugger {
     logs: Mutex<Vec<String>>,
     widgets: Mutex<HashMap<String, Arc<RwLock<f32>>>>,
     widget_window_size: usize,
-    log_window_size: usize,
+    debug_lines: usize,
+    debug_level: LogLevel,
 }
 
 impl Debugger {
     pub fn new() -> Self {
+        let debug_lines = FILE_HANDLER.get_config().getuint("Debug", "debuglines").unwrap().unwrap() as usize;
+        let debug_level = LogLevel::from_string(FILE_HANDLER.get_config().get("Debug", "debuglevel").unwrap());
         let debugger = Self {
             logs: Mutex::new(Vec::new()),
             widgets: Mutex::new(HashMap::new()),
             widget_window_size: 5,
-            log_window_size: 5,
+            debug_lines,
+            debug_level,
         };
 
         debugger.create_terminal_window();
@@ -58,7 +77,7 @@ impl Debugger {
     }
 
     pub fn log_with_type<T>(&self, level: LogLevel, message: &str) {
-        if level <= LogLevel::Dev {
+        if level <= self.debug_level {
             let formatted_message: String = format!(
                 "{}: [{:?}] ({}) {}",
                 chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
@@ -73,7 +92,7 @@ impl Debugger {
     }
 
     pub fn log_without_type(&self, level: LogLevel, message: &str) {
-        if level <= LogLevel::Dev {
+        if level <= self.debug_level {
             let formatted_message: String = format!(
                 "{}: [{:?}] {}",
                 chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
@@ -118,7 +137,7 @@ impl Debugger {
             stdout(),
             MoveTo(
                 0,
-                (self.widget_window_size + self.log_window_size + 2) as u16
+                (self.widget_window_size + self.debug_lines + 2) as u16
             ),
             Clear(ClearType::CurrentLine)
         )
@@ -128,7 +147,7 @@ impl Debugger {
             stdout(),
             MoveTo(
                 0,
-                (self.widget_window_size + self.log_window_size + 2) as u16
+                (self.widget_window_size + self.debug_lines + 2) as u16
             ),
         )
         .unwrap();
@@ -138,7 +157,7 @@ impl Debugger {
     fn update_log(&self) {
         let locked_logs = self.logs.lock().unwrap();
         let total_logs = locked_logs.len();
-        let start_index = total_logs.saturating_sub(self.log_window_size);
+        let start_index = total_logs.saturating_sub(self.debug_lines);
 
         for (i, message) in locked_logs.iter().skip(start_index).enumerate() {
             let row = (i + self.widget_window_size + 2) as u16;
