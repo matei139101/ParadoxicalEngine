@@ -1,0 +1,34 @@
+use crate::prelude::*;
+
+pub struct InputService {
+    repositories: Arc<Repositories>,
+}
+
+impl InputService {
+    pub fn new(
+        repositories: Arc<Repositories>,
+        input_receiver: UnboundedReceiver<DeviceEvent>,
+    ) -> Arc<Mutex<InputService>> {
+        let input_service = InputService { repositories };
+        input_service.run(input_receiver);
+
+        Arc::new(Mutex::new(input_service))
+    }
+
+    fn run(&self, input_receiver: UnboundedReceiver<DeviceEvent>) {
+        let mut stream = UnboundedReceiverStream::new(input_receiver);
+        let input_repo = self.repositories.get_input_repository();
+
+        thread::spawn(move || {
+            let async_runtime = tokio::runtime::Runtime::new().unwrap();
+            async_runtime.block_on(async {
+                while let Some(input) = stream.next().await {
+                    if let DeviceEvent::MouseMotion { delta } = input {
+                        input_repo.update_axis("CAMERAY", delta.0);
+                        input_repo.update_axis("CAMERAX", delta.1);
+                    }
+                }
+            });
+        });
+    }
+}

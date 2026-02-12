@@ -1,7 +1,7 @@
 #[derive(Clone, Debug)]
 pub struct ViewportInfo {
     pub offset: [f32; 2],
-    pub extent: [f32; 2]
+    pub extent: [f32; 2],
 }
 
 impl ViewportInfo {
@@ -9,7 +9,9 @@ impl ViewportInfo {
         Self { offset, extent }
     }
 
+    /*
     pub fn set_extent(&mut self, extent: [f32; 2]) {
         self.extent = extent;
     }
+    */
 }

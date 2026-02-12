@@ -1,26 +1,86 @@
-use std::{collections::{BTreeMap, HashMap, HashSet}, fs::File, io::Read, ops::Range, sync::Arc, vec};
+use crate::prelude::*;
 use glam::{Mat4, Vec3};
-use vulkano::{self, buffer::{Buffer, BufferCreateInfo, BufferUsage}, command_buffer::{allocator::StandardCommandBufferAllocator, AutoCommandBufferBuilder, CommandBufferUsage, CopyBufferToImageInfo, PrimaryAutoCommandBuffer, RenderPassBeginInfo, SubpassBeginInfo, SubpassContents, SubpassEndInfo}, descriptor_set::{self, allocator::{DescriptorSetAllocator, StandardDescriptorSetAllocator, StandardDescriptorSetAllocatorCreateInfo}, layout::{self, DescriptorSetLayout, DescriptorSetLayoutBinding, DescriptorSetLayoutCreateInfo, DescriptorType}, DescriptorSet, WriteDescriptorSet}, device::{physical::{PhysicalDevice, PhysicalDeviceType}, Device, DeviceExtensions, Queue}, format::{ClearValue, Format}, image::{sampler::{ComponentMapping, ComponentSwizzle, Filter, Sampler, SamplerAddressMode, SamplerCreateInfo}, view::{ImageView, ImageViewCreateInfo, ImageViewType}, Image, ImageAspect, ImageCreateInfo, ImageSubresourceRange, ImageType, ImageUsage}, instance::Instance, memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, StandardMemoryAllocator}, pipeline::{graphics::{color_blend::{ColorBlendAttachmentState, ColorBlendState, ColorComponents}, depth_stencil::{DepthState, DepthStencilState}, input_assembly::InputAssemblyState, multisample::MultisampleState, rasterization::RasterizationState, vertex_input::VertexDefinition, viewport::{Scissor, Viewport, ViewportState}, GraphicsPipelineCreateInfo}, layout::{PipelineLayoutCreateInfo, PushConstantRange}, DynamicState, GraphicsPipeline, Pipeline, PipelineLayout, PipelineShaderStageCreateInfo}, render_pass::{Framebuffer, RenderPass, Subpass}, shader::{self, ShaderModule, ShaderModuleCreateInfo, ShaderStages}, swapchain::{self, Surface, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo}, sync::{self, GpuFuture}};
-use winit::{event_loop::{ActiveEventLoop}, window::{Window}};
 use smallvec::{smallvec, SmallVec};
 use std::path::Path;
+use std::{
+    collections::{BTreeMap, HashMap, HashSet},
+    fs::File,
+    io::Read,
+    ops::Range,
+    sync::Arc,
+    vec,
+};
+use vulkano::{
+    self,
+    buffer::{Buffer, BufferCreateInfo, BufferUsage},
+    command_buffer::{
+        allocator::StandardCommandBufferAllocator, AutoCommandBufferBuilder, CommandBufferUsage,
+        CopyBufferToImageInfo, PrimaryAutoCommandBuffer, RenderPassBeginInfo, SubpassBeginInfo,
+        SubpassContents, SubpassEndInfo,
+    },
+    descriptor_set::{
+        allocator::{StandardDescriptorSetAllocator, StandardDescriptorSetAllocatorCreateInfo},
+        layout::{
+            DescriptorSetLayout, DescriptorSetLayoutBinding, DescriptorSetLayoutCreateInfo,
+            DescriptorType,
+        },
+        DescriptorSet, WriteDescriptorSet,
+    },
+    device::{
+        physical::{PhysicalDevice, PhysicalDeviceType},
+        Device, DeviceExtensions, Queue,
+    },
+    format::{ClearValue, Format},
+    image::{
+        sampler::{
+            ComponentMapping, ComponentSwizzle, Filter, Sampler, SamplerAddressMode,
+            SamplerCreateInfo,
+        },
+        view::{ImageView, ImageViewCreateInfo, ImageViewType},
+        Image, ImageAspect, ImageCreateInfo, ImageSubresourceRange, ImageType, ImageUsage,
+    },
+    instance::Instance,
+    memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, StandardMemoryAllocator},
+    pipeline::{
+        graphics::{
+            color_blend::{ColorBlendAttachmentState, ColorBlendState, ColorComponents},
+            depth_stencil::{DepthState, DepthStencilState},
+            input_assembly::InputAssemblyState,
+            multisample::MultisampleState,
+            rasterization::RasterizationState,
+            vertex_input::VertexDefinition,
+            viewport::{Scissor, Viewport, ViewportState},
+            GraphicsPipelineCreateInfo,
+        },
+        layout::{PipelineLayoutCreateInfo, PushConstantRange},
+        DynamicState, GraphicsPipeline, Pipeline, PipelineLayout, PipelineShaderStageCreateInfo,
+    },
+    render_pass::{Framebuffer, RenderPass, Subpass},
+    shader::{self, ShaderModule, ShaderModuleCreateInfo, ShaderStages},
+    swapchain::{self, Surface, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo},
+    sync::{self, GpuFuture},
+};
+use winit::{event_loop::ActiveEventLoop, window::Window};
 
-use crate::engine::{utils::{logger::{LogLevel, Logger}, structs::transform::Transform}, vulkan::structs::{push_constants::PushConstants, vertex::Vertex, vulkan_object::VulkanObject}};
-use crate::engine::vulkan::structs::viewport::ViewportInfo;
 use crate::engine::vulkan::structs::vertex;
+use crate::engine::vulkan::structs::viewport::ViewportInfo;
 use crate::engine::vulkan::vulkan_container::vulkano::pipeline::PipelineBindPoint;
+use crate::engine::{
+    utils::structs::transform::Transform,
+    vulkan::structs::{push_constants::PushConstants, vertex::Vertex, vulkan_object::VulkanObject},
+};
 
 pub struct VulkanContainer {
-    instance: Arc<Instance>,
-    surface: Arc<Surface>,
-    physical_device: Arc<PhysicalDevice>,
+    //instance: Arc<Instance>,
+    //surface: Arc<Surface>,
+    //physical_device: Arc<PhysicalDevice>,
     logical_device: Arc<Device>,
-    window: Arc<Window>,
+    //window: Arc<Window>,
     queue: Arc<Queue>,
     swapchain: Arc<Swapchain>,
-    images: Vec<Arc<Image>>,
-    image_views: Vec<Arc<ImageView>>,
-    render_pass: Arc<RenderPass>,
+    //images: Vec<Arc<Image>>,
+    //image_views: Vec<Arc<ImageView>>,
+    //render_pass: Arc<RenderPass>,
     memory_allocator: Arc<StandardMemoryAllocator>,
     command_buffer_allocator: Arc<StandardCommandBufferAllocator>,
     descriptor_set_allocator: Arc<StandardDescriptorSetAllocator>,
@@ -32,26 +92,48 @@ pub struct VulkanContainer {
 }
 
 impl VulkanContainer {
-    pub fn new(event_loop: &ActiveEventLoop, window: Arc<Window>, viewport_info: &ViewportInfo) -> Self {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating Vulkan wrapper...");
+    pub fn new(
+        event_loop: &ActiveEventLoop,
+        window: Arc<Window>,
+        viewport_info: &ViewportInfo,
+    ) -> Self {
+        log!(Self, High, "Creating Vulkan wrapper...");
 
         let device_extensions = DeviceExtensions {
             khr_swapchain: true,
             ..Default::default()
         };
-        
+
         let instance = VulkanContainer::create_instance(event_loop);
         let surface = VulkanContainer::create_surface(&instance, window.clone());
-        let (physical_device, queue_family_index) = VulkanContainer::create_physical_device(&instance, &surface, &device_extensions);
-        let (logical_device, queue) = VulkanContainer::create_logical_device(physical_device.clone(), queue_family_index, &device_extensions);
-        let (swapchain, images) = VulkanContainer::create_swapchain(physical_device.clone(), logical_device.clone(), window.clone(), surface.clone());
+        let (physical_device, queue_family_index) =
+            VulkanContainer::create_physical_device(&instance, &surface, &device_extensions);
+        let (logical_device, queue) = VulkanContainer::create_logical_device(
+            physical_device.clone(),
+            queue_family_index,
+            &device_extensions,
+        );
+        let (swapchain, images) = VulkanContainer::create_swapchain(
+            physical_device.clone(),
+            logical_device.clone(),
+            window.clone(),
+            surface.clone(),
+        );
         let image_views = VulkanContainer::create_image_views(&images);
-        let render_pass = VulkanContainer::create_render_pass(logical_device.clone(), swapchain.clone());
+        let render_pass =
+            VulkanContainer::create_render_pass(logical_device.clone(), swapchain.clone());
         let memory_allocator = VulkanContainer::create_memory_allocator(logical_device.clone());
-        let command_buffer_allocator = VulkanContainer::create_command_buffer_allocator(logical_device.clone());
-        let descriptor_set_allocator = VulkanContainer::create_descriptor_set_allocator(logical_device.clone());
-        let graphics_pipeline = VulkanContainer::create_graphics_pipeline(logical_device.clone(), render_pass.clone());
-        let framebuffers = VulkanContainer::create_frame_buffers(render_pass.clone(), image_views.clone(), memory_allocator.clone());
+        let command_buffer_allocator =
+            VulkanContainer::create_command_buffer_allocator(logical_device.clone());
+        let descriptor_set_allocator =
+            VulkanContainer::create_descriptor_set_allocator(logical_device.clone());
+        let graphics_pipeline =
+            VulkanContainer::create_graphics_pipeline(logical_device.clone(), render_pass.clone());
+        let framebuffers = VulkanContainer::create_frame_buffers(
+            render_pass.clone(),
+            image_views.clone(),
+            memory_allocator.clone(),
+        );
 
         let viewports = smallvec![Viewport {
             offset: [viewport_info.offset[0], viewport_info.offset[1]],
@@ -60,21 +142,27 @@ impl VulkanContainer {
         }];
 
         let scissors = smallvec![Scissor {
-            offset: [viewport_info.offset[0] as u32, viewport_info.offset[1] as u32],
-            extent: [viewport_info.extent[0] as u32, viewport_info.extent[1] as u32],
+            offset: [
+                viewport_info.offset[0] as u32,
+                viewport_info.offset[1] as u32
+            ],
+            extent: [
+                viewport_info.extent[0] as u32,
+                viewport_info.extent[1] as u32
+            ],
         }];
 
         let vulkan_wrapper = VulkanContainer {
-            instance,
-            surface,
-            physical_device,
+            //instance,
+            //surface,
+            //physical_device,
             logical_device,
-            window,
+            //window,
             queue,
             swapchain,
-            images,
-            image_views,
-            render_pass,
+            //images,
+            //image_views,
+            //render_pass,
             memory_allocator,
             command_buffer_allocator,
             descriptor_set_allocator,
@@ -85,15 +173,16 @@ impl VulkanContainer {
             vulkan_objects: HashMap::new(),
         };
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Vulkan wrapper created successfully.");
-        return vulkan_wrapper;
+        log!(Self, High, "Vulkan wrapper created successfully.");
+        vulkan_wrapper
     }
 
     fn create_instance(event_loop: &ActiveEventLoop) -> Arc<Instance> {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating Vulkan instance...");
-        
+        log!(Self, High, "Creating Vulkan instance...");
+
         let library = vulkano::library::VulkanLibrary::new().unwrap();
-        let required_extensions = vulkano::swapchain::Surface::required_extensions(&event_loop).unwrap();
+        let required_extensions =
+            vulkano::swapchain::Surface::required_extensions(&event_loop).unwrap();
 
         let instance = vulkano::instance::Instance::new(
             library,
@@ -101,30 +190,40 @@ impl VulkanContainer {
                 flags: vulkano::instance::InstanceCreateFlags::ENUMERATE_PORTABILITY,
                 enabled_extensions: required_extensions,
                 ..Default::default()
-            }
-        ).expect("Could not create Vulkan instance");
+            },
+        )
+        .expect("Could not create Vulkan instance");
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Vulkan instance created successfully.");
-        return instance
+        log!(Self, High, "Vulkan instance created successfully.");
+        instance
     }
 
     fn create_surface(instance: &Arc<Instance>, window: Arc<Window>) -> Arc<Surface> {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating surface...");
+        log!(Self, High, "Creating surface...");
 
-        let surface = vulkano::swapchain::Surface::from_window(instance.clone(), window).expect("Could not create surface");
+        let surface = vulkano::swapchain::Surface::from_window(instance.clone(), window)
+            .expect("Could not create surface");
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Surface created successfully.");
-        return surface;
+        log!(Self, High, "Surface created successfully.");
+        surface
     }
 
-    fn create_physical_device(instance: &Arc<Instance>, surface: &Arc<Surface>, device_extensions: &DeviceExtensions) -> (Arc<PhysicalDevice>, u32) {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating physical device...");
+    fn create_physical_device(
+        instance: &Arc<Instance>,
+        surface: &Arc<Surface>,
+        device_extensions: &DeviceExtensions,
+    ) -> (Arc<PhysicalDevice>, u32) {
+        log!(Self, High, "Creating physical device...");
 
         let physical_devices = instance
             .enumerate_physical_devices()
             .expect("Could not enumerate physical devices");
 
-        Logger::log(LogLevel::Dev, "vulkan_wrapper", &format!("Found {} physical devices.", physical_devices.len()));
+        log!(
+            Self,
+            Dev,
+            &format!("Found {} physical devices.", physical_devices.len())
+        );
 
         //This is a lot of black magic to filter the physical devices to find which support the needed extensions and queue families. And then also score them by type.
         let physical_device = physical_devices
@@ -134,8 +233,9 @@ impl VulkanContainer {
                     .iter()
                     .enumerate()
                     .position(|(i, q)| {
-                        q.queue_flags.contains(vulkano::device::QueueFlags::GRAPHICS)
-                            && p.surface_support(i as u32, &surface).unwrap_or(false)
+                        q.queue_flags
+                            .contains(vulkano::device::QueueFlags::GRAPHICS)
+                            && p.surface_support(i as u32, surface).unwrap_or(false)
                     })
                     .map(|q| (p, q as u32))
             })
@@ -148,12 +248,16 @@ impl VulkanContainer {
             })
             .expect("no device available");
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Physical device created successfully.");
-        return physical_device;
+        log!(Self, High, "Physical device created successfully.");
+        physical_device
     }
 
-    fn create_logical_device(physical_device: Arc<PhysicalDevice>, queue_family_index: u32, device_extensions: &DeviceExtensions) -> (Arc<Device>, Arc<Queue>) {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating logical device...");
+    fn create_logical_device(
+        physical_device: Arc<PhysicalDevice>,
+        queue_family_index: u32,
+        device_extensions: &DeviceExtensions,
+    ) -> (Arc<Device>, Arc<Queue>) {
+        log!(Self, High, "Creating logical device...");
 
         let (device, mut queues) = vulkano::device::Device::new(
             physical_device.clone(),
@@ -168,12 +272,16 @@ impl VulkanContainer {
         )
         .expect("failed to create device");
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Logical device created successfully.");
-        return (device, queues.next().unwrap());
+        log!(Self, High, "Logical device created successfully.");
+        (device, queues.next().unwrap())
     }
-    
-    fn prepare_swapchain_create_info(physical_device: Arc<PhysicalDevice>, surface: Arc<Surface>, window: Arc<Window>) -> SwapchainCreateInfo {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Preparing swapchain createinfo...");
+
+    fn prepare_swapchain_create_info(
+        physical_device: Arc<PhysicalDevice>,
+        surface: Arc<Surface>,
+        window: Arc<Window>,
+    ) -> SwapchainCreateInfo {
+        log!(Self, High, "Preparing swapchain createinfo...");
 
         let caps = physical_device
             .surface_capabilities(&surface, Default::default())
@@ -196,25 +304,31 @@ impl VulkanContainer {
             ..Default::default()
         };
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Swapchain createinfo prepared successfully.");
-        return swapchain_create_info;
+        log!(Self, High, "Swapchain createinfo prepared successfully.");
+        swapchain_create_info
     }
 
-    fn create_swapchain(physical_device: Arc<PhysicalDevice>, device: Arc<Device>, window: Arc<Window>, surface: Arc<Surface>) -> (Arc<Swapchain>, Vec<Arc<Image>>) {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating swapchain...");
+    fn create_swapchain(
+        physical_device: Arc<PhysicalDevice>,
+        device: Arc<Device>,
+        window: Arc<Window>,
+        surface: Arc<Surface>,
+    ) -> (Arc<Swapchain>, Vec<Arc<Image>>) {
+        log!(Self, High, "Creating swapchain...");
 
         let (swapchain, images) = Swapchain::new(
             device.clone(),
             surface.clone(),
-            VulkanContainer::prepare_swapchain_create_info(physical_device, surface, window)
-        ).unwrap();
+            VulkanContainer::prepare_swapchain_create_info(physical_device, surface, window),
+        )
+        .unwrap();
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Swapchain created successfully.");
-        return (swapchain, images);
+        log!(Self, High, "Swapchain created successfully.");
+        (swapchain, images)
     }
 
     fn create_image_views(images: &Vec<Arc<Image>>) -> Vec<Arc<ImageView>> {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating image views...");
+        log!(Self, High, "Creating image views...");
 
         let mut image_views: Vec<Arc<ImageView>> = Vec::new();
         for image in images {
@@ -229,14 +343,8 @@ impl VulkanContainer {
                 },
                 subresource_range: ImageSubresourceRange {
                     aspects: ImageAspect::Color.into(),
-                    mip_levels: Range {
-                        start: 0,
-                        end: 1,
-                    },
-                    array_layers: Range {
-                        start: 0,
-                        end: 1,
-                    },
+                    mip_levels: Range { start: 0, end: 1 },
+                    array_layers: Range { start: 0, end: 1 },
                 },
                 ..Default::default()
             };
@@ -245,12 +353,15 @@ impl VulkanContainer {
             image_views.push(image_view.unwrap());
         }
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Image views created successfully.");
-        return image_views;
+        log!(Self, High, "Image views created successfully.");
+        image_views
     }
 
-    fn create_render_pass(logical_device: Arc<Device>, swapchain: Arc<Swapchain>) -> Arc<RenderPass> {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating renderpass...");
+    fn create_render_pass(
+        logical_device: Arc<Device>,
+        swapchain: Arc<Swapchain>,
+    ) -> Arc<RenderPass> {
+        log!(Self, High, "Creating renderpass...");
 
         let render_pass = vulkano::single_pass_renderpass!(
             logical_device.clone(),
@@ -272,14 +383,18 @@ impl VulkanContainer {
                 color: [color],
                 depth_stencil: {depth},
             }
-        ).unwrap();
+        )
+        .unwrap();
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Created renderpass.");
-        return render_pass;
+        log!(Self, High, "Created renderpass.");
+        render_pass
     }
 
-    fn create_graphics_pipeline(logical_device: Arc<Device>, render_pass: Arc<RenderPass>) -> Arc<GraphicsPipeline> {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating graphics pipeline...");
+    fn create_graphics_pipeline(
+        logical_device: Arc<Device>,
+        render_pass: Arc<RenderPass>,
+    ) -> Arc<GraphicsPipeline> {
+        log!(Self, High, "Creating graphics pipeline...");
 
         let vs_path = Path::new(env!("OUT_DIR")).join("shader.vert.spv");
         let fs_path = Path::new(env!("OUT_DIR")).join("shader.frag.spv");
@@ -292,17 +407,15 @@ impl VulkanContainer {
             PipelineShaderStageCreateInfo::new(fs.entry_point("main").unwrap()),
         ];
 
-        let mut uniform_binding = DescriptorSetLayoutBinding::descriptor_type(DescriptorType::UniformBuffer);
+        let mut uniform_binding =
+            DescriptorSetLayoutBinding::descriptor_type(DescriptorType::UniformBuffer);
         uniform_binding.stages = ShaderStages::VERTEX;
 
-        let mut texture_binding = DescriptorSetLayoutBinding::descriptor_type(DescriptorType::CombinedImageSampler);
+        let mut texture_binding =
+            DescriptorSetLayoutBinding::descriptor_type(DescriptorType::CombinedImageSampler);
         texture_binding.stages = ShaderStages::FRAGMENT;
 
-        let bindings = BTreeMap::from([
-            ( 0, uniform_binding ),
-            ( 1, texture_binding ),
-        ]);
-
+        let bindings = BTreeMap::from([(0, uniform_binding), (1, texture_binding)]);
 
         let descriptor_set_layout = DescriptorSetLayout::new(
             logical_device.clone(),
@@ -325,14 +438,17 @@ impl VulkanContainer {
             },
         );
 
-        let mut pipeline_info = GraphicsPipelineCreateInfo::layout(pipeline_layout.unwrap().clone());
+        let mut pipeline_info =
+            GraphicsPipelineCreateInfo::layout(pipeline_layout.unwrap().clone());
 
         pipeline_info.stages = stages;
         pipeline_info.vertex_input_state = Some(
             VertexDefinition::definition(
-                &<vertex::Vertex as vulkano::pipeline::graphics::vertex_input::Vertex>::per_vertex(),
-                &vs.entry_point("main").unwrap()
-            ).unwrap()
+                &<vertex::Vertex as vulkano::pipeline::graphics::vertex_input::Vertex>::per_vertex(
+                ),
+                &vs.entry_point("main").unwrap(),
+            )
+            .unwrap(),
         );
         pipeline_info.input_assembly_state = Some(InputAssemblyState::default());
         pipeline_info.dynamic_state = HashSet::from_iter([
@@ -347,39 +463,44 @@ impl VulkanContainer {
         pipeline_info.rasterization_state = Some(RasterizationState::default());
         pipeline_info.multisample_state = Some(MultisampleState::default());
         pipeline_info.color_blend_state = Some(ColorBlendState {
-            attachments: vec![
-                ColorBlendAttachmentState {
-                    blend: None,           // no blending
-                    color_write_mask: ColorComponents::all(),
-                    ..Default::default()
-                }
-            ],
+            attachments: vec![ColorBlendAttachmentState {
+                blend: None, // no blending
+                color_write_mask: ColorComponents::all(),
+                ..Default::default()
+            }],
             ..Default::default()
         });
         pipeline_info.subpass = Some(Subpass::from(render_pass.clone(), 0).unwrap().into());
 
-        let depth_sencil_state = DepthStencilState { depth: Some(DepthState::simple()), ..Default::default()};
+        let depth_sencil_state = DepthStencilState {
+            depth: Some(DepthState::simple()),
+            ..Default::default()
+        };
         pipeline_info.depth_stencil_state = Some(depth_sencil_state);
-        
-        let pipeline = GraphicsPipeline::new(
-            logical_device.clone(),
-            None,
-            pipeline_info
-        ).unwrap();
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Graphics pipeline created successfully.");
-        return pipeline;
+        let pipeline = GraphicsPipeline::new(logical_device.clone(), None, pipeline_info).unwrap();
+
+        log!(Self, High, "Graphics pipeline created successfully.");
+        pipeline
     }
 
-    fn create_frame_buffers(render_pass: Arc<RenderPass>, image_views: Vec<Arc<ImageView>>, memory_allocator: Arc<StandardMemoryAllocator>) -> Vec<Arc<Framebuffer>> {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating frame buffer...");
+    fn create_frame_buffers(
+        render_pass: Arc<RenderPass>,
+        image_views: Vec<Arc<ImageView>>,
+        memory_allocator: Arc<StandardMemoryAllocator>,
+    ) -> Vec<Arc<Framebuffer>> {
+        log!(Self, High, "Creating frame buffer...");
 
-        let mut framebuffers: Vec<Arc<vulkano::render_pass::Framebuffer>> = vec!();
+        let mut framebuffers: Vec<Arc<vulkano::render_pass::Framebuffer>> = vec![];
         for image_view in image_views.iter() {
-            let depth_image_create_info = ImageCreateInfo { 
+            let depth_image_create_info = ImageCreateInfo {
                 image_type: ImageType::Dim2d,
-                format: render_pass.attachments()[1].format, 
-                extent: [image_view.image().extent()[0], image_view.image().extent()[1], 1],
+                format: render_pass.attachments()[1].format,
+                extent: [
+                    image_view.image().extent()[0],
+                    image_view.image().extent()[1],
+                    1,
+                ],
                 usage: ImageUsage::DEPTH_STENCIL_ATTACHMENT,
                 ..Default::default()
             };
@@ -387,7 +508,12 @@ impl VulkanContainer {
                 memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
                 ..Default::default()
             };
-            let depth_image = Image::new(memory_allocator.clone(), depth_image_create_info, depth_image_allocation_info).unwrap();
+            let depth_image = Image::new(
+                memory_allocator.clone(),
+                depth_image_create_info,
+                depth_image_allocation_info,
+            )
+            .unwrap();
             let depth_view = ImageView::new_default(depth_image).unwrap();
 
             framebuffers.push(
@@ -396,55 +522,67 @@ impl VulkanContainer {
                     vulkano::render_pass::FramebufferCreateInfo {
                         attachments: vec![image_view.clone(), depth_view.clone()],
                         ..Default::default()
-                    }
-                ).unwrap()
+                    },
+                )
+                .unwrap(),
             );
         }
-
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Created frame buffer...");
-        return framebuffers;
+        log!(Self, High, "Created frame buffer...");
+        framebuffers
     }
-    
+
     fn create_memory_allocator(logical_device: Arc<Device>) -> Arc<StandardMemoryAllocator> {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating memory allocator...");
+        log!(Self, High, "Creating memory allocator...");
 
-        let memory_allocator = Arc::new(StandardMemoryAllocator::new_default(logical_device.clone()));
+        let memory_allocator =
+            Arc::new(StandardMemoryAllocator::new_default(logical_device.clone()));
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Created memory allocator.");
-        return memory_allocator;
+        log!(Self, High, "Created memory allocator.");
+        memory_allocator
     }
 
-    fn create_command_buffer_allocator(logical_device: Arc<Device>) -> Arc<StandardCommandBufferAllocator> {
-        return Arc::new(StandardCommandBufferAllocator::new(logical_device.clone(), Default::default()));
+    fn create_command_buffer_allocator(
+        logical_device: Arc<Device>,
+    ) -> Arc<StandardCommandBufferAllocator> {
+        Arc::new(StandardCommandBufferAllocator::new(
+            logical_device.clone(),
+            Default::default(),
+        ))
     }
 
-    fn create_descriptor_set_allocator(logical_device: Arc<Device>) -> Arc<StandardDescriptorSetAllocator> {        
-        let descriptor_set_allocator = Arc::new(StandardDescriptorSetAllocator::new(
-            logical_device, 
+    fn create_descriptor_set_allocator(
+        logical_device: Arc<Device>,
+    ) -> Arc<StandardDescriptorSetAllocator> {
+        Arc::new(StandardDescriptorSetAllocator::new(
+            logical_device,
             StandardDescriptorSetAllocatorCreateInfo::default(),
-        ));
-
-        return descriptor_set_allocator;
+        ))
     }
 
     fn load_shader(device: Arc<Device>, path: impl AsRef<std::path::Path>) -> Arc<ShaderModule> {
         let mut file = File::open(path).expect("Failed to open shader file");
         let mut bytes = vec![];
-        
-        file.read_to_end(&mut bytes).expect("Failed to read shader file");
-    
+
+        file.read_to_end(&mut bytes)
+            .expect("Failed to read shader file");
+
         let words = shader::spirv::bytes_to_words(&bytes);
-        
+
         unsafe {
-            ShaderModule::new(
-                device,
-                ShaderModuleCreateInfo::new(&words.unwrap())).expect("Failed to create shader module")
+            ShaderModule::new(device, ShaderModuleCreateInfo::new(&words.unwrap()))
+                .expect("Failed to create shader module")
         }
     }
-    
-    pub fn create_vulkan_object(&mut self, id: usize, vertices: Vec<Vertex>, object_transform: Transform, texture_path: &str) {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Creating vulkan object...");
-        
+
+    pub fn create_vulkan_object(
+        &mut self,
+        id: &usize,
+        vertices: &Vec<Vertex>,
+        object_transform: &Transform,
+        texture_path: &str,
+    ) {
+        log!(Self, High, "Creating vulkan object...");
+
         let vertex_buffer = Buffer::from_iter(
             self.memory_allocator.clone(),
             BufferCreateInfo {
@@ -452,65 +590,93 @@ impl VulkanContainer {
                 ..Default::default()
             },
             AllocationCreateInfo {
-                memory_type_filter: MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
+                    | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
                 ..Default::default()
             },
-            vertices.iter().cloned()
-        ).expect("Failed to create vertex buffer");
+            vertices.iter().cloned(),
+        )
+        .expect("Failed to create vertex buffer");
 
         let (texture_view, texture_sample) = self.load_png_texture(texture_path).unwrap();
 
         let descriptor_set = DescriptorSet::new(
-                self.descriptor_set_allocator.clone(),
-                self.graphics_pipeline.layout().set_layouts().get(0).unwrap().clone(),
-                [
-                    WriteDescriptorSet::image_view_sampler(
-                        1, // binding index
-                        texture_view.clone(),
-                        texture_sample.clone(),
-                    ),
-                ],
-    [],
-            ).unwrap();
+            self.descriptor_set_allocator.clone(),
+            self.graphics_pipeline
+                .layout()
+                .set_layouts()
+                .first()
+                .unwrap()
+                .clone(),
+            [WriteDescriptorSet::image_view_sampler(
+                1, // binding index
+                texture_view.clone(),
+                texture_sample.clone(),
+            )],
+            [],
+        )
+        .unwrap();
 
-        let vulkan_object = VulkanObject::new(vertex_buffer, object_transform, descriptor_set);
-        self.vulkan_objects.insert(id, vulkan_object);
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Vulkan object created successfully.");
+        let vulkan_object =
+            VulkanObject::new(vertex_buffer, object_transform.clone(), descriptor_set);
+        self.vulkan_objects.insert(*id, vulkan_object);
+        log!(Self, High, "Vulkan object created successfully.");
     }
 
-    pub fn delete_vulkan_object(&mut self, index: usize) {
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Deleting vulkan object...");
+    /*
+    pub fn delete_vulkan_object(&mut self, index: &usize) {
+        Logger::log::<Self>(LogLevel::High, "Deleting vulkan object...");
 
-        if index >= self.vulkan_objects.len() {
-            Logger::log(LogLevel::High, "vulkan_wrapper", "Index out of bounds for vulkan object deletion.");
+        if *index >= self.vulkan_objects.len() {
+            Logger::log::<Self>(
+                LogLevel::High,
+                "Index out of bounds for vulkan object deletion.",
+            );
             return;
         }
 
-        self.vulkan_objects.remove(&index);
+        self.vulkan_objects.remove(index);
 
-        Logger::log(LogLevel::High, "vulkan_wrapper", "Vulkan object deleted successfully.");
+        Logger::log::<Self>(LogLevel::High, "Vulkan object deleted successfully.");
     }
+    */
 
-    fn create_command_buffer(&mut self, image_index: usize, view_projection: Mat4) -> Arc<PrimaryAutoCommandBuffer> {
+    fn create_command_buffer(
+        &mut self,
+        image_index: usize,
+        view_projection: Mat4,
+    ) -> Arc<PrimaryAutoCommandBuffer> {
         let mut builder = AutoCommandBufferBuilder::primary(
             self.command_buffer_allocator.clone(),
             self.logical_device.active_queue_family_indices()[0],
-            CommandBufferUsage::OneTimeSubmit
-        ).unwrap();
+            CommandBufferUsage::OneTimeSubmit,
+        )
+        .unwrap();
 
-        builder.begin_render_pass(
+        builder
+            .begin_render_pass(
                 RenderPassBeginInfo {
-                    clear_values: vec![Some([0.0, 0.0, 0.0, 1.0].into()), Some(ClearValue::Depth(1.0))], // background color
+                    clear_values: vec![
+                        Some([0.0, 0.0, 0.0, 1.0].into()),
+                        Some(ClearValue::Depth(1.0)),
+                    ], // background color
                     ..RenderPassBeginInfo::framebuffer(self.framebuffers[image_index].clone())
                 },
                 SubpassBeginInfo {
                     contents: SubpassContents::Inline,
                     ..Default::default()
                 },
-            ).unwrap();
-        builder.bind_pipeline_graphics(self.graphics_pipeline.clone()).unwrap();
-        builder.set_viewport_with_count(self.viewports.clone()).unwrap();
-        builder.set_scissor_with_count(self.scissors.clone()).unwrap();
+            )
+            .unwrap();
+        builder
+            .bind_pipeline_graphics(self.graphics_pipeline.clone())
+            .unwrap();
+        builder
+            .set_viewport_with_count(self.viewports.clone())
+            .unwrap();
+        builder
+            .set_scissor_with_count(self.scissors.clone())
+            .unwrap();
 
         for vulkan_object in self.vulkan_objects.iter() {
             let model = Mat4::from_translation(vulkan_object.1.get_transform().position);
@@ -518,49 +684,63 @@ impl VulkanContainer {
             let push_constants = PushConstants::new(mvp);
 
             let vertex_buffer = vulkan_object.1.get_buffer().clone();
-            builder.bind_vertex_buffers(0, vertex_buffer.clone()).unwrap();
+            builder
+                .bind_vertex_buffers(0, vertex_buffer.clone())
+                .unwrap();
 
-            builder.bind_descriptor_sets(
-            PipelineBindPoint::Graphics,
-            self.graphics_pipeline.layout().clone(),
-            0,
-            vulkan_object.1.get_descriptor_set(),
-        ).unwrap();
-            builder.push_constants(self.graphics_pipeline.layout().clone(), 0, push_constants).unwrap();
-            unsafe { builder.draw(vertex_buffer.len().try_into().unwrap(), 1, 0, 0).unwrap() };
+            builder
+                .bind_descriptor_sets(
+                    PipelineBindPoint::Graphics,
+                    self.graphics_pipeline.layout().clone(),
+                    0,
+                    vulkan_object.1.get_descriptor_set(),
+                )
+                .unwrap();
+            builder
+                .push_constants(self.graphics_pipeline.layout().clone(), 0, push_constants)
+                .unwrap();
+            unsafe {
+                builder
+                    .draw(vertex_buffer.len().try_into().unwrap(), 1, 0, 0)
+                    .unwrap()
+            };
         }
 
         builder.end_render_pass(SubpassEndInfo::default()).unwrap();
-        let command_buffer = builder.build().unwrap();
-        
-        return command_buffer;
+
+        builder.build().unwrap()
     }
 
-    pub fn draw_frame(&mut self, camera_location: Vec3, camera_rotation: Vec3) {
-        let (image_index, _, acquire_future) = swapchain::acquire_next_image(self.swapchain.clone(), None).unwrap();
-        let view_projection = VulkanContainer::make_view_projection(self.viewports[0].extent[0] as f32 / self.viewports[0].extent[1] as f32, camera_location, camera_rotation);
-        
-        let command_buffer = self.create_command_buffer(image_index.try_into().unwrap(), view_projection);
-        let future = GpuFuture::then_signal_fence_and_flush(
-            GpuFuture::then_swapchain_present(
-                GpuFuture::then_execute(acquire_future, self.queue.clone(),
-                command_buffer).unwrap(),
-                self.queue.clone(),
-                SwapchainPresentInfo::swapchain_image_index(self.swapchain.clone(),
-                image_index
-            )
+    pub fn draw_frame(&mut self, camera_transform: Transform) {
+        let (image_index, _, acquire_future) =
+            swapchain::acquire_next_image(self.swapchain.clone(), None).unwrap();
+        let view_projection = VulkanContainer::make_view_projection(
+            self.viewports[0].extent[0] / self.viewports[0].extent[1],
+            &camera_transform.get_position(),
+            &camera_transform.get_rotation(),
+        );
+
+        let command_buffer =
+            self.create_command_buffer(image_index.try_into().unwrap(), view_projection);
+        let future = GpuFuture::then_signal_fence_and_flush(GpuFuture::then_swapchain_present(
+            GpuFuture::then_execute(acquire_future, self.queue.clone(), command_buffer).unwrap(),
+            self.queue.clone(),
+            SwapchainPresentInfo::swapchain_image_index(self.swapchain.clone(), image_index),
         ));
 
         match future {
-            Ok(fut) => { fut.wait(None).unwrap(); }
+            Ok(fut) => {
+                fut.wait(None).unwrap();
+            }
             Err(e) => {
                 eprintln!("Failed to flush frame: {:?}", e);
             }
         }
     }
 
+    /*
     pub fn resize_viewport(&mut self, viewport_info: &ViewportInfo) {
-        Logger::log(LogLevel::Medium, "vulkan_wrapper", "Resizing viewport...");
+        Logger::log::<Self>(LogLevel::Medium, "Resizing viewport...");
 
         self.viewports[0] = Viewport {
             offset: [viewport_info.offset[0], viewport_info.offset[1]],
@@ -569,26 +749,51 @@ impl VulkanContainer {
         };
 
         self.scissors[0] = Scissor {
-            offset: [viewport_info.offset[0] as u32, viewport_info.offset[1] as u32],
-            extent: [viewport_info.extent[0] as u32, viewport_info.extent[1] as u32],
+            offset: [
+                viewport_info.offset[0] as u32,
+                viewport_info.offset[1] as u32,
+            ],
+            extent: [
+                viewport_info.extent[0] as u32,
+                viewport_info.extent[1] as u32,
+            ],
         };
 
         self.surface = VulkanContainer::create_surface(&self.instance.clone(), self.window.clone());
-        (self.swapchain, self.images) = self.swapchain.recreate(VulkanContainer::prepare_swapchain_create_info(self.physical_device.clone(), self.surface.clone(), self.window.clone())).unwrap();
+        (self.swapchain, self.images) = self
+            .swapchain
+            .recreate(VulkanContainer::prepare_swapchain_create_info(
+                self.physical_device.clone(),
+                self.surface.clone(),
+                self.window.clone(),
+            ))
+            .unwrap();
         self.image_views = VulkanContainer::create_image_views(&self.images.clone());
-        self.render_pass = VulkanContainer::create_render_pass(self.logical_device.clone(), self.swapchain.clone());
-        self.framebuffers = VulkanContainer::create_frame_buffers(self.render_pass.clone(), self.image_views.clone(), self.memory_allocator.clone());
+        self.render_pass = VulkanContainer::create_render_pass(
+            self.logical_device.clone(),
+            self.swapchain.clone(),
+        );
+        self.framebuffers = VulkanContainer::create_frame_buffers(
+            self.render_pass.clone(),
+            self.image_views.clone(),
+            self.memory_allocator.clone(),
+        );
 
-        Logger::log(LogLevel::Medium, "vulkan_wrapper", "Viewport resized successfully.");
+        Logger::log::<Self>(LogLevel::Medium, "Viewport resized successfully.");
     }
+    */
 
-    fn make_view_projection(aspect_ratio: f32, camera_location: Vec3, camera_rotation: Vec3) -> Mat4 {
+    fn make_view_projection(
+        aspect_ratio: f32,
+        camera_location: &Vec3,
+        camera_rotation: &Vec3,
+    ) -> Mat4 {
         let rotation_x = Mat4::from_rotation_x(camera_rotation.x);
         let rotation_y = Mat4::from_rotation_y(camera_rotation.y);
         let rotation_z = Mat4::from_rotation_z(camera_rotation.z);
         let rotation = rotation_x * rotation_y * rotation_z;
 
-        let translation = Mat4::from_translation(camera_location);
+        let translation = Mat4::from_translation(*camera_location);
         let view = rotation * translation;
         let proj = Mat4::perspective_rh_gl(45.0_f32.to_radians(), aspect_ratio, 0.1, 1000.0);
         let view_projection = proj * view;
@@ -597,7 +802,10 @@ impl VulkanContainer {
     }
 
     //[TO-DO]: Almost entirely AI generated so I'll need to look this over some time to remake it properly.
-    fn load_png_texture(&mut self, path: &str) -> Result<(Arc<ImageView>, Arc<Sampler>), Box<dyn std::error::Error>> {
+    fn load_png_texture(
+        &mut self,
+        path: &str,
+    ) -> Result<(Arc<ImageView>, Arc<Sampler>), Box<dyn std::error::Error>> {
         // Load PNG file
         let img = image::open(path)?.to_rgba8();
         let (width, height) = img.dimensions();
@@ -611,7 +819,8 @@ impl VulkanContainer {
                 ..Default::default()
             },
             AllocationCreateInfo {
-                memory_type_filter: MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                memory_type_filter: MemoryTypeFilter::PREFER_HOST
+                    | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
                 ..Default::default()
             },
             image_data,
@@ -652,10 +861,7 @@ impl VulkanContainer {
         future.wait(None)?;
 
         // Create image view
-        let texture_view = ImageView::new(
-            image.clone(),
-            ImageViewCreateInfo::from_image(&image),
-        )?;
+        let texture_view = ImageView::new(image.clone(), ImageViewCreateInfo::from_image(&image))?;
 
         // Create sampler
         let texture_sampler = Sampler::new(

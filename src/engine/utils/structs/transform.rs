@@ -1,4 +1,4 @@
-use glam::Vec3;
+use crate::prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct Transform {
@@ -8,16 +8,16 @@ pub struct Transform {
 }
 
 impl Transform {
-    pub fn new(position: Vec3, rotation: Vec3, /* size: Vec3 */) -> Self {
-        return Transform { position, rotation, /* size */ }
+    pub fn new(position: Vec3, rotation: Vec3 /* size: Vec3 */) -> Self {
+        Transform { position, rotation }
     }
 
     pub fn get_position(&self) -> Vec3 {
-        return self.position;
+        self.position
     }
 
     pub fn get_rotation(&self) -> Vec3 {
-        return self.rotation;
+        self.rotation
     }
 
     /*
@@ -27,26 +27,36 @@ impl Transform {
     */
 
     pub fn right(&self) -> Vec3 {
-        return Vec3::new(
+        Vec3::new(
             self.rotation.y.cos() * self.rotation.z.cos(),
             self.rotation.z.sin(),
             self.rotation.y.sin() * self.rotation.z.cos(),
-        );
+        )
     }
 
     pub fn forward(&self) -> Vec3 {
-        return Vec3::new(
+        Vec3::new(
             self.rotation.y.sin(),
             -self.rotation.x.sin(),
             -self.rotation.y.cos(),
-        );
+        )
     }
 
     pub fn up(&self) -> Vec3 {
-        return Vec3::new(
-            self.rotation.x.sin() * self.rotation.y.sin() * self.rotation.z.cos() - self.rotation.x.cos() * self.rotation.z.sin(),
-            self.rotation.x.cos() * self.rotation.z.cos() + self.rotation.x.sin() * self.rotation.y.sin() * self.rotation.z.sin(),
+        Vec3::new(
+            self.rotation.x.sin() * self.rotation.y.sin() * self.rotation.z.cos()
+                - self.rotation.x.cos() * self.rotation.z.sin(),
+            self.rotation.x.cos() * self.rotation.z.cos()
+                + self.rotation.x.sin() * self.rotation.y.sin() * self.rotation.z.sin(),
             -self.rotation.x.sin() * self.rotation.y.cos(),
-        );
+        )
+    }
+
+    pub fn offset_y_rotation(&mut self, amount: f64) {
+        self.rotation.y += amount as f32;
+    }
+
+    pub fn offset_x_rotation(&mut self, amount: f64) {
+        self.rotation.x += amount as f32;
     }
 }
