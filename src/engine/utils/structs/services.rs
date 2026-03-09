@@ -1,3 +1,5 @@
+use winit::{event::KeyEvent};
+
 use crate::prelude::*;
 
 pub struct Services {
@@ -11,7 +13,7 @@ impl Services {
         repositories: Arc<Repositories>,
         event_bus_ptr: Arc<EventBus>,
         async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-        input_receiver: UnboundedReceiver<DeviceEvent>,
+        input_receiver: UnboundedReceiver<(Option<KeyEvent>, Option<DeviceEvent>)>,
     ) -> Services {
         Services { 
             input_service: InputService::new(repositories.clone(), input_receiver), 

@@ -5,6 +5,8 @@ pub struct EntityRepository {
     entities: RwLock<HashMap<usize, String>>,
     transforms: RwLock<HashMap<usize, Transform>>,
     controllers: RwLock<HashMap<usize, i16>>,
+
+    update_functions: RwLock<HashMap<usize, fn(Arc<Repositories>)>>,
     last_id: RwLock<usize>,
 }
 
@@ -14,6 +16,8 @@ impl EntityRepository {
             entities: Default::default(),
             transforms: Default::default(),
             controllers: Default::default(),
+            
+            update_functions: Default::default(),
             last_id: RwLock::new(0),
         }
     }
@@ -66,6 +70,23 @@ impl EntityRepository {
             log!(Self, Medium, "Added a player.");
         } else {
             log!(Self, Critical, "Failed to writelock controllers...");
+        }
+    }
+
+    pub fn add_update_function(&self, id: usize, function: fn(Arc<Repositories>)) {
+        if let Ok(mut update_functions) = self.update_functions.write() {
+            update_functions.insert(id, function);
+            log!(Self, Medium, "Added a transform.");
+        } else {
+            log!(Self, Critical, "Failed to writelock transforms...");
+        }
+    }
+
+    pub fn get_update_functions(&self) -> Option<HashMap<usize, fn(Arc<Repositories>)>> {
+        if let Ok(update_functions) = self.update_functions.read() {
+            Some(update_functions.clone())
+        } else {
+            None
         }
     }
 

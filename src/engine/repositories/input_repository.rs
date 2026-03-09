@@ -13,8 +13,6 @@ impl InputRepository {
         axismaps.insert("CAMERAX", RwLock::new(0.0));
         axismaps.insert("CAMERAY", RwLock::new(0.0));
         axismaps.insert("FORWARD", RwLock::new(0.0));
-        axismaps.insert("BACKWARD", RwLock::new(0.0));
-        axismaps.insert("LEFT", RwLock::new(0.0));
         axismaps.insert("RIGHT", RwLock::new(0.0));
 
         InputRepository {
@@ -70,14 +68,6 @@ impl InputRepository {
             if let Some(axis) = axismaps.get(key) {
                 if let Ok(mut axis) = axis.write() {
                     *axis = value;
-
-                    /*
-                    log!(
-                        Self,
-                        Low,
-                        &format!("Updated axis: {}. New value: {}", key, axis).to_string()
-                    );
-                    */
                 } else {
                     log!(Self, Critical, "Faild to writelock axis...");
                 }

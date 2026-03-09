@@ -1,3 +1,5 @@
+use winit::{event::KeyEvent};
+
 use crate::prelude::*;
 mod engine;
 mod prelude;
@@ -5,7 +7,7 @@ mod resources;
 
 fn main() {
     let (async_sender, async_receiver) = mpsc::unbounded_channel::<Box<dyn Any + Send + Sync>>();
-    let (input_sender, input_receiver) = mpsc::unbounded_channel::<DeviceEvent>();
+    let (input_sender, input_receiver) = mpsc::unbounded_channel::<(Option<KeyEvent>, Option<DeviceEvent>)>();
 
     let event_bus = EventBus::new();
 
@@ -19,14 +21,14 @@ fn main() {
     let app = make_app(async_sender.clone(), input_sender.clone());
 
     let synchronizer = Synchronizer::new(services);
-    let synchronizer_handle = synchronizer.start();
+    let _synchronizer_handle = synchronizer.start();
     start_event_bus_thread(event_bus, async_receiver);
     start_window_thread(app);
 }
 
 fn make_app(
     async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-    input_sender: UnboundedSender<DeviceEvent>,
+    input_sender: UnboundedSender<(Option<KeyEvent>, Option<DeviceEvent>)>,
 ) -> (App, EventLoop<()>) {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);

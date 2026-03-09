@@ -16,7 +16,7 @@ use std::{
 use tokio::sync::{mpsc::UnboundedSender};
 use winit::{
     application::ApplicationHandler,
-    event::{DeviceEvent, DeviceId, WindowEvent},
+    event::{DeviceEvent, DeviceId, KeyEvent, WindowEvent},
     event_loop::ActiveEventLoop,
     keyboard::PhysicalKey,
     window::{Window, WindowId},
@@ -31,13 +31,13 @@ pub struct App {
     window: Option<Arc<Window>>,
     viewport_info: Option<ViewportInfo>,
     async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-    input_sender: UnboundedSender<DeviceEvent>,
+    input_sender: UnboundedSender<(Option<KeyEvent>, Option<DeviceEvent>)>,
 }
 
 impl App {
     pub fn new(
         async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-        input_sender: UnboundedSender<DeviceEvent>,
+        input_sender: UnboundedSender<(Option<KeyEvent>, Option<DeviceEvent>)>,
     ) -> Self {
         App {
             window: Default::default(),
@@ -128,6 +128,8 @@ impl ApplicationHandler for App {
                 if event.physical_key == PhysicalKey::Code(winit::keyboard::KeyCode::KeyQ) {
                     event_loop.exit();
                 }
+
+                let _ = self.input_sender.send((Some(event), None));
             }
             _ => (),
         }
@@ -140,6 +142,6 @@ impl ApplicationHandler for App {
         _device_id: DeviceId,
         event: DeviceEvent,
     ) {
-        let _ = self.input_sender.send(event);
+        let _ = self.input_sender.send((None, Some(event)));
     }
 }
