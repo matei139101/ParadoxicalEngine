@@ -25,15 +25,7 @@ impl Synchronizer {
                 );
             }
 
-            if let Ok(mut entity_service) = services.get_entity_service().lock() {
-                entity_service.update();
-            } else {
-                log!(
-                    Self,
-                    Critical,
-                    "Couldn't lock entity service for updating..."
-                );
-            }
+            services.get_entity_service().update();
         })
     }
 }

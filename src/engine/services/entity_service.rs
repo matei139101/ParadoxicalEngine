@@ -12,44 +12,40 @@ impl EntityService {
         repositories: Arc<Repositories>,
         event_bus_ptr: Arc<EventBus>,
         async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-    ) -> Arc<Mutex<Self>> {
-        let entity_service = Arc::new(Mutex::new(EntityService {
+    ) -> Arc<Self> {
+        let entity_service = Arc::new(EntityService {
             repositories,
             event_bus_ptr: event_bus_ptr.clone(),
             async_sender,
-        }));
+        });
 
         EntityService::observe_events(entity_service.clone());
 
         entity_service
     }
 
-    pub fn observe_events(self_ptr: Arc<Mutex<EntityService>>) {
+    pub fn observe_events(self_ptr: Arc<EntityService>) {
         let bus_arc = {
-            let this = self_ptr.lock().unwrap();
-            this.event_bus_ptr.clone()
+            self_ptr.event_bus_ptr.clone()
         };
 
-        let self_ptr_clone = self_ptr.clone();
         bus_arc
             .clone()
             .observe::<CreateEntityEvent>(Box::new(move |event_any| {
                 if let Some(event) = event_any.downcast_ref::<CreateEntityEvent>() {
-                    if let Ok(mut temp_self) = self_ptr_clone.lock() {
-                        temp_self.create_entity(&event.entity);
-                    }
+                    self_ptr.create_entity(&event.entity);
                 }
             }));
     }
 
-    fn create_entity(&mut self, entity: &Box<dyn Entity>) {
+    fn create_entity(&self, entity: &Box<dyn Entity>) {
         entity.load(
             self.repositories.get_entity_repository(),
             self.async_sender.clone(),
         );
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&self) {
         if let Some(update_functions) = self.repositories.get_entity_repository().get_update_functions() {
             for (_index, function) in update_functions {
                 function(self.repositories.clone())

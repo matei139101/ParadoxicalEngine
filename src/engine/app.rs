@@ -16,7 +16,7 @@ use std::{
 use tokio::sync::{mpsc::UnboundedSender};
 use winit::{
     application::ApplicationHandler,
-    event::{DeviceEvent, DeviceId, KeyEvent, WindowEvent},
+    event::{DeviceEvent, DeviceId,WindowEvent},
     event_loop::ActiveEventLoop,
     keyboard::PhysicalKey,
     window::{Window, WindowId},
@@ -30,20 +30,20 @@ use crate::engine::{
 pub struct App {
     window: Option<Arc<Window>>,
     viewport_info: Option<ViewportInfo>,
+    services: Arc<Services>,
     async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-    input_sender: UnboundedSender<(Option<KeyEvent>, Option<DeviceEvent>)>,
 }
 
 impl App {
     pub fn new(
+        services: Arc<Services>,
         async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-        input_sender: UnboundedSender<(Option<KeyEvent>, Option<DeviceEvent>)>,
     ) -> Self {
         App {
             window: Default::default(),
             viewport_info: Default::default(),
+            services,
             async_sender,
-            input_sender,
         }
     }
 }
@@ -129,7 +129,7 @@ impl ApplicationHandler for App {
                     event_loop.exit();
                 }
 
-                let _ = self.input_sender.send((Some(event), None));
+                self.services.get_input_service().input_key(event);
             }
             _ => (),
         }
@@ -142,6 +142,6 @@ impl ApplicationHandler for App {
         _device_id: DeviceId,
         event: DeviceEvent,
     ) {
-        let _ = self.input_sender.send((None, Some(event)));
+         self.services.get_input_service().input_axis(event);
     }
 }
