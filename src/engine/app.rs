@@ -4,14 +4,13 @@ use crate::{
         entities::{base_controller::BaseController, base_cube::BaseCube},
         events::{
             entity_events::CreateEntityEvent,
-            vulkan_events::{CreateVulkanInstanceEvent},
         },
     },
 };
 use glam::vec3;
 use std::{
     any::Any,
-    sync::{Arc, Mutex},
+    sync::{Arc},
 };
 use tokio::sync::{mpsc::UnboundedSender};
 use winit::{
@@ -62,19 +61,12 @@ impl ApplicationHandler for App {
             ],
         ));
 
-        let vulkan_container = Arc::new(Mutex::new(VulkanContainer::new(
+        let vulkan_container = VulkanContainer::new(
             event_loop,
             self.window.as_ref().unwrap().clone(),
             self.viewport_info.as_ref().unwrap(),
-        )));
-
-        let create_vk_container_message = CreateVulkanInstanceEvent {
-            vulkan_container: vulkan_container.clone(),
-        };
-
-        let _ = self
-            .async_sender
-            .send(Box::new(create_vk_container_message));
+        );
+        self.services.get_vulkan_service().create_vulkan_container(vulkan_container);
 
         //For testing purposes
         let cube1_transform = Transform::new(vec3(-1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0));

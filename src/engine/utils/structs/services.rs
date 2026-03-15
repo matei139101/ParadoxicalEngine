@@ -3,7 +3,7 @@ use crate::prelude::*;
 pub struct Services {
     input_service: Arc<InputService>,
     entity_service: Arc<EntityService>,
-    vulkan_service: Arc<Mutex<VulkanService>>,
+    vulkan_service: Arc<VulkanService>,
 }
 
 impl Services {
@@ -27,7 +27,7 @@ impl Services {
         self.entity_service.clone()
     }
 
-    pub fn get_vulkan_service(&self) -> Arc<Mutex<VulkanService>> {
+    pub fn get_vulkan_service(&self) -> Arc<VulkanService> {
         self.vulkan_service.clone()
     }
 }

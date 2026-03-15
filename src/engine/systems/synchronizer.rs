@@ -15,16 +15,7 @@ impl Synchronizer {
         let services = Arc::clone(&self.services);
 
         thread::spawn(move || loop {
-            if let Ok(mut vulkan_service) = services.get_vulkan_service().lock() {
-                vulkan_service.update();
-            } else {
-                log!(
-                    Self,
-                    Critical,
-                    "Couldn't lock vulkan service for updating..."
-                );
-            }
-
+            services.get_vulkan_service().update();
             services.get_entity_service().update();
         })
     }
