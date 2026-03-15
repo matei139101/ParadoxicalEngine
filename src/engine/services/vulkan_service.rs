@@ -69,6 +69,8 @@ impl VulkanService {
         } else {
             log!(Self, High, "Failed to get camera transform...");
         }
+
+        crate::DEBUGGER.new_frame();
     }
 
     fn create_vulkan_object(

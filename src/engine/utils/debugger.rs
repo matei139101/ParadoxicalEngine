@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     sync::{Arc, Mutex, RwLock},
     time::Duration,
 };
@@ -12,7 +11,7 @@ use crossterm::{
 use once_cell::sync::Lazy;
 use std::io::{stdout, Write};
 use tokio::runtime::Runtime;
-use crate::prelude::*;
+use crate::{engine::utils::tracked_values::TrackedValues, prelude::*};
 
 #[derive(Debug, Eq, PartialEq, PartialOrd)]
 pub enum LogLevel {
@@ -39,7 +38,8 @@ impl LogLevel {
 
 pub struct Debugger {
     logs: Mutex<Vec<String>>,
-    widgets: Mutex<HashMap<String, Arc<RwLock<f32>>>>,
+    tracked_values: TrackedValues,
+
     widget_window_size: usize,
     debug_lines: usize,
     debug_level: LogLevel,
@@ -51,7 +51,8 @@ impl Debugger {
         let debug_level = LogLevel::from_string(FILE_HANDLER.get_config().get("Debug", "debuglevel").unwrap());
         let debugger = Self {
             logs: Mutex::new(Vec::new()),
-            widgets: Mutex::new(HashMap::new()),
+            tracked_values: TrackedValues::new(),
+
             widget_window_size: 5,
             debug_lines,
             debug_level,
@@ -103,15 +104,6 @@ impl Debugger {
             self.logs.lock().unwrap().push(formatted_message);
             self.update_terminal();
         }
-    }
-
-    pub fn add_widget(&self, value_name: String, value_pointer: Arc<RwLock<f32>>) {
-        self.widgets
-            .lock()
-            .unwrap()
-            .insert(value_name, value_pointer);
-
-        self.update_terminal();
     }
 
     fn create_terminal_window(&self) {
@@ -172,10 +164,9 @@ impl Debugger {
     fn update_widgets(&self) {
         execute!(stdout(), MoveTo(0, 3),).unwrap();
 
-        let widgets = self.widgets.lock().unwrap();
-        for (key, value) in widgets.iter() {
-            print!("{} : {} | ", key, value.read().unwrap())
-        }
+        print!("fps : {} | ", self.tracked_values.get_fps());
+        print!("frametime : {} | ", self.tracked_values.get_frametime());
+        print!("total frames : {} | ", self.tracked_values.get_total_frames());
 
         self.move_cursor_to_bottom();
     }
@@ -192,6 +183,19 @@ impl Debugger {
         self.update_widgets();
         self.update_log();
     }
+
+    pub fn new_frame(&self) {
+        let last_frame = self.tracked_values.get_last_frame();
+        let new_frame = Instant::now();
+        let frametime = new_frame - last_frame;
+        let fps = 1.0 / frametime.as_secs_f32();
+        let total_frames = self.tracked_values.get_total_frames() + 1;
+        
+        self.tracked_values.set_total_frames(total_frames);
+        self.tracked_values.set_last_frame(new_frame);
+        self.tracked_values.set_frametime(frametime.as_micros());
+        self.tracked_values.set_fps(fps);
+    }
 }
 
 pub static DEBUGGER: Lazy<Debugger> = Lazy::new(Debugger::new);
@@ -203,12 +207,5 @@ macro_rules! log {
     };
     ($level:expr, $msg:expr) => {
         $crate::DEBUGGER.log_without_type($level, $msg);
-    };
-}
-
-#[macro_export]
-macro_rules! widget {
-    ($value_name:expr, $value_ptr:expr) => {
-        $crate::DEBUGGER.add_widget($value_name, $value_ptr);
     };
 }
