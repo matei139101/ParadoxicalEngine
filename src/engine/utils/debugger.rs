@@ -165,7 +165,7 @@ impl Debugger {
         execute!(stdout(), MoveTo(0, 3),).unwrap();
 
         print!("fps : {} | ", self.tracked_values.get_fps());
-        print!("frametime : {} | ", self.tracked_values.get_frametime());
+        print!("frametime : {} | ", self.tracked_values.get_frametime() as f32 / 1000.0);
         print!("total frames : {} | ", self.tracked_values.get_total_frames());
 
         self.move_cursor_to_bottom();
