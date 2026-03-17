@@ -1,4 +1,3 @@
-use crate::engine::vulkan::structs::vertex::Vertex;
 use crate::engine::vulkan::vulkan_container::{VulkanContainer};
 use crate::resources::events::vulkan_events::{VulkanCreateObjectEvent};
 use crate::{prelude::*};
@@ -35,9 +34,8 @@ impl VulkanService {
                 if let Some(event) = event_any.downcast_ref::<VulkanCreateObjectEvent>() {
                     self_ptr_clone.create_vulkan_object(
                         &event.object_id,
-                        &event.vertices,
+                        &event.mesh,
                         &event.object_transform,
-                        &event.texture_path,
                     );
                 }
             }));
@@ -76,13 +74,13 @@ impl VulkanService {
     fn create_vulkan_object(
         &self,
         object_id: &usize,
-        vertices: &Vec<Vertex>,
+        mesh: &String,
         object_transform: &Transform,
-        texture_path: &String,
     ) {
         if let Ok(mut vulkan_container) = self.vulkan_container.write() {
             if let Some(vulkan_container) = vulkan_container.as_mut() {
-                vulkan_container.create_vulkan_object(object_id, vertices, object_transform, texture_path);
+                let mesh = Mesh::from_gltf(mesh)[0].clone();
+                vulkan_container.create_vulkan_object(object_id, mesh, object_transform);
             } else {
                 log!(Self, Critical, "VulkanContainer not found...");
             }

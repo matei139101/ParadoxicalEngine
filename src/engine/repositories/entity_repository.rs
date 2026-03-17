@@ -113,7 +113,7 @@ impl EntityRepository {
             }
             log!(
                 Self,
-                Critical,
+                Medium,
                 &format!("No entity found with player id: {}", player_id).to_string()
             );
             Some(Transform {

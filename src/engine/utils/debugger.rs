@@ -78,7 +78,7 @@ impl Debugger {
     }
 
     pub fn log_with_type<T>(&self, level: LogLevel, message: &str) {
-        if level <= self.debug_level {
+        if level >= self.debug_level {
             let formatted_message: String = format!(
                 "{}: [{:?}] ({}) {}",
                 chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
@@ -93,7 +93,7 @@ impl Debugger {
     }
 
     pub fn log_without_type(&self, level: LogLevel, message: &str) {
-        if level <= self.debug_level {
+        if level >= self.debug_level {
             let formatted_message: String = format!(
                 "{}: [{:?}] {}",
                 chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),

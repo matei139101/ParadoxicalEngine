@@ -1,16 +1,24 @@
 use std::panic;
 
 use gltf::{image, mesh::util::ReadIndices};
+use vulkano::{buffer::BufferContents, pipeline::graphics::vertex_input::Vertex as VulkanoVertex};
 
 use crate::prelude::*;
 
+#[derive(BufferContents, VulkanoVertex, Clone, Debug)]
 #[repr(C)]
 pub struct Vertex {
+    #[format(R32G32B32_SFLOAT)]
     pub position: [f32; 3],
+    
+    #[format(R32G32_SFLOAT)]
     pub uv: [f32; 2],
+
+    #[format(R32G32B32_SFLOAT)]
     pub normal: [f32; 3],
 }
 
+#[derive(Clone)]
 pub struct Mesh {
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,

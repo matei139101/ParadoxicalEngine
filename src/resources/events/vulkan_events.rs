@@ -2,10 +2,10 @@ use std::sync::{Arc, Mutex};
 
 use tokio::sync::oneshot;
 
-use crate::engine::{
+use crate::{engine::{
     utils::structs::transform::Transform,
-    vulkan::{structs::vertex::Vertex, vulkan_container::VulkanContainer},
-};
+    vulkan::{vulkan_container::VulkanContainer},
+}};
 
 pub struct CreateVulkanInstanceEvent {
     pub vulkan_container: Arc<Mutex<VulkanContainer>>,
@@ -24,9 +24,8 @@ pub struct ViewportResizeInfo {
 
 pub struct VulkanCreateObjectEvent {
     pub object_id: usize,
-    pub vertices: Vec<Vertex>,
+    pub mesh: String,
     pub object_transform: Transform,
-    pub texture_path: String,
 }
 
 /*
