@@ -12,7 +12,6 @@ use std::{
     any::Any,
     sync::{Arc},
 };
-use tokio::sync::{mpsc::UnboundedSender};
 use winit::{
     application::ApplicationHandler,
     event::{DeviceEvent, DeviceId,WindowEvent},
@@ -30,13 +29,13 @@ pub struct App {
     window: Option<Arc<Window>>,
     viewport_info: Option<ViewportInfo>,
     services: Arc<Services>,
-    async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+    async_sender: Sender<Box<dyn Any + Send + Sync>>,
 }
 
 impl App {
     pub fn new(
         services: Arc<Services>,
-        async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+        async_sender: Sender<Box<dyn Any + Send + Sync>>,
     ) -> Self {
         App {
             window: Default::default(),

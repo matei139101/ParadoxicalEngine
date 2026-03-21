@@ -4,7 +4,7 @@ mod prelude;
 mod resources;
 
 fn main() {
-    let (async_sender, async_receiver) = mpsc::unbounded_channel::<Box<dyn Any + Send + Sync>>();
+    let (async_sender, async_receiver) = mpsc::channel::<Box<dyn Any + Send + Sync>>();
 
     let event_bus = EventBus::new();
 
@@ -23,7 +23,7 @@ fn main() {
 }
 
 fn make_app(
-    async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+    async_sender: Sender<Box<dyn Any + Send + Sync>>,
     services: Arc<Services>,
 ) -> (App, EventLoop<()>) {
     let event_loop = EventLoop::new().unwrap();
@@ -35,15 +35,11 @@ fn make_app(
 
 fn start_event_bus_thread(
     event_bus_ptr: Arc<EventBus>,
-    async_receiver: UnboundedReceiver<Box<dyn Any + Send + Sync>>,
+    async_receiver: Receiver<Box<dyn Any + Send + Sync>>,
 ) {
     thread::spawn(move || {
-        log!(High, "Starting async runtime");
-        let async_runtime = tokio::runtime::Runtime::new().unwrap();
-
-        async_runtime.block_on(async {
-            EventBus::run(event_bus_ptr.clone(), async_receiver).await;
-        })
+        log!(High, "Starting async runtime"); 
+        EventBus::run(event_bus_ptr.clone(), async_receiver);
     });
 }
 

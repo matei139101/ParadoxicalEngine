@@ -76,7 +76,7 @@ impl Entity for BaseController {
         repository: std::sync::Arc<
             crate::engine::repositories::entity_repository::EntityRepository,
         >,
-        _async_sender: tokio::sync::mpsc::UnboundedSender<Box<dyn std::any::Any + Send + Sync>>,
+        _async_sender: Sender<Box<dyn std::any::Any + Send + Sync>>,
     ) {
         if let Some(id) = repository.get_id() {
             repository.add_entity(id, self.name.clone());

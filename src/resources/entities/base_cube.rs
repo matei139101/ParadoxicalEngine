@@ -23,7 +23,7 @@ impl Entity for BaseCube {
     fn load(
         &self,
         repository: Arc<EntityRepository>,
-        async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+        async_sender: Sender<Box<dyn Any + Send + Sync>>,
     ) {
         if let Some(id) = repository.get_id() {
             repository.add_entity(id, self.name.clone());

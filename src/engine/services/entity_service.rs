@@ -4,14 +4,14 @@ use crate::resources::events::entity_events::CreateEntityEvent;
 pub struct EntityService {
     repositories: Arc<Repositories>,
     event_bus_ptr: Arc<EventBus>,
-    async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+    async_sender: Sender<Box<dyn Any + Send + Sync>>,
 }
 
 impl EntityService {
     pub fn new(
         repositories: Arc<Repositories>,
         event_bus_ptr: Arc<EventBus>,
-        async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+        async_sender: Sender<Box<dyn Any + Send + Sync>>,
     ) -> Arc<Self> {
         let entity_service = Arc::new(EntityService {
             repositories,

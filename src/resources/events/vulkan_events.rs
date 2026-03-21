@@ -1,7 +1,5 @@
 use std::sync::{Arc, Mutex};
 
-use tokio::sync::oneshot;
-
 use crate::{engine::{
     utils::structs::transform::Transform,
     vulkan::{vulkan_container::VulkanContainer},
@@ -9,11 +7,6 @@ use crate::{engine::{
 
 pub struct CreateVulkanInstanceEvent {
     pub vulkan_container: Arc<Mutex<VulkanContainer>>,
-}
-
-pub struct VulkanDrawEvent {
-    pub player_id: i16,
-    pub confirmation_sender: Arc<Mutex<Option<oneshot::Sender<()>>>>,
 }
 
 /*

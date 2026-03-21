@@ -10,7 +10,7 @@ impl Services {
     pub fn new(
         repositories: Arc<Repositories>,
         event_bus_ptr: Arc<EventBus>,
-        async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
+        async_sender: Sender<Box<dyn Any + Send + Sync>>,
     ) -> Services {
         Services { 
             input_service: InputService::new(repositories.clone()), 
