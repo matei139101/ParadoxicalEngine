@@ -1,44 +1,68 @@
+use std::{io, thread::sleep};
+
 use once_cell::sync::Lazy;
+use ratatui::{layout::{Constraint, Direction, Layout}, prelude::CrosstermBackend, widgets::{self, Block, Borders, List, ListDirection, Tabs}, Frame, Terminal};
 
 use crate::prelude::*;
 
-enum InfoType {
-    Statistic,
-    Log,
+#[derive(Default)]
+pub struct TerminalData {
+    pub widgets: Vec<String>,
+    pub logs: Vec<String>,
 }
 
-struct TerminalMessage {
-    info_type: InfoType,
-    message: Vec<String>,
-}
-
-struct TerminalHandler {
-    display_sender: Sender<TerminalMessage>
+pub struct TerminalHandler {
+    terminal: RwLock<Terminal<CrosstermBackend<io::Stdout>>>,
+    terminal_data: RwLock<TerminalData>,
 }
 
 impl TerminalHandler {
     fn new() -> TerminalHandler {
-        let (display_sender, display_receiver) = mpsc::channel::<TerminalMessage>();
-        let terminal_handler = TerminalHandler { display_sender };
+        let terminal = Terminal::new(CrosstermBackend::new(io::stdout())).unwrap();
+
+        let terminal_handler = TerminalHandler { terminal: RwLock::new(terminal), terminal_data: Default::default()};
 
         thread::spawn(move || {
-            let mut last_periodic = Instant::now();
             let update_interval = Duration::from_secs(5);
             
             loop {
-                TERMINAL_HANDLER.update(&display_receiver, &mut last_periodic, &update_interval);
+                TERMINAL_HANDLER.update(&update_interval);
             }
             });
 
         terminal_handler
     }
 
-    fn update(&self, display_receiver: &Receiver<TerminalMessage>, last_periodic: &mut Instant, update_interval: &Duration) {
-        match display_receiver.recv_timeout(*update_interval) {
-            Ok(msg) => { /* handle message */ }
-            Err(mpsc::RecvTimeoutError::Timeout) => { /* periodic update */ }
-            Err(mpsc::RecvTimeoutError::Disconnected) => { /* channel closed */ }
-        }
+    fn update(&self, update_interval: &Duration) {
+        self.draw_terminal();
+
+        sleep(*update_interval);
+    }
+
+    fn draw_terminal(&self) {
+        let widgets = self.terminal_data.read().unwrap().widgets.clone();
+        let logs = self.terminal_data.read().unwrap().logs.clone();
+
+        self.terminal.write().expect("Program failed to writelock the terminal for logging...").draw(|frame| {
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Length(3), Constraint::Fill(1)])
+                .split(frame.area());
+
+            frame.render_widget(
+                Tabs::new(widgets).block(Block::default().borders(Borders::ALL).title("Stats")),
+                chunks[0],
+            );
+
+            frame.render_widget(
+                List::new(logs).direction(ListDirection::BottomToTop).block(Block::default().borders(Borders::ALL).title("Logs")),
+                chunks[1],
+            );
+        }).unwrap();
+    }
+
+    pub fn write(&self, data: TerminalData) {
+        *self.terminal_data.write().unwrap() = data;
     }
 }
 

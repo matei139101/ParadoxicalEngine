@@ -1,9 +1,18 @@
-use crate::prelude::*;
+use crossterm::{execute, terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}};
+use once_cell::sync::Lazy;
+
+use crate::{engine::utils::terminal_handler::TERMINAL_HANDLER, prelude::*};
 mod engine;
 mod prelude;
 mod resources;
 
 fn main() {
+    enable_raw_mode().unwrap();
+    execute!(std::io::stdout(), EnterAlternateScreen).unwrap();
+
+    Lazy::force(&TERMINAL_HANDLER);
+    Lazy::force(&DEBUGGER);
+
     let (async_sender, async_receiver) = mpsc::channel::<Box<dyn Any + Send + Sync>>();
 
     let event_bus = EventBus::new();
@@ -20,6 +29,9 @@ fn main() {
     let _synchronizer_handle = synchronizer.start();
     start_event_bus_thread(event_bus, async_receiver);
     start_window_thread(app);
+
+    disable_raw_mode().unwrap();
+    execute!(std::io::stdout(), LeaveAlternateScreen).unwrap();
 }
 
 fn make_app(

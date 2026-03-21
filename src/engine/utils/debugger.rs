@@ -1,10 +1,9 @@
 use std::{
     sync::{Arc, RwLock},
-    time::Duration,
 };
 
 use once_cell::sync::Lazy;
-use crate::{engine::utils::{tracked_values::TrackedValues}, prelude::*};
+use crate::{engine::utils::{terminal_handler::{TerminalData, TERMINAL_HANDLER}, tracked_values::TrackedValues}, prelude::*};
 
 #[derive(Debug, Eq, PartialEq, PartialOrd)]
 pub enum LogLevel {
@@ -39,39 +38,15 @@ pub struct Debugger {
 impl Debugger {
     pub fn new() -> Self {
         let debug_level = LogLevel::from_string(FILE_HANDLER.get_config().get("Debug", "debuglevel").unwrap());
-        let debugger = Self {
+        Debugger {
             logs: Arc::new(RwLock::new(Vec::new())),
             tracked_values: Arc::new(TrackedValues::new()),
 
             debug_level,
-        };
-        debugger.start_debugger();
-
-        debugger
-    }
-
-    fn start_debugger(&self) {
-        /*
-        let tracked_values = self.tracked_values.clone();
-        let logs = self.logs.clone();
-
-        std::thread::spawn(move || {
-            let debugger_runtime = Runtime::new().unwrap();
-
-            debugger_runtime.block_on(async {
-                loop {
-                    TERMINAL_HANDLER.create_terminal_window();
-                    TERMINAL_HANDLER.write(LoggableType::Widget(tracked_values.clone()));
-                    TERMINAL_HANDLER.write(LoggableType::Log(logs.clone()));
-                    tokio::time::sleep(Duration::from_secs(1)).await;
-                }
-            });
-        });
-        */
+        }
     }
 
     pub fn log_with_type<T>(&self, level: LogLevel, message: &str) {
-        /*
         if level >= self.debug_level {
             let formatted_message: String = format!(
                 "{}: [{:?}] ({}) {}",
@@ -82,13 +57,11 @@ impl Debugger {
             );
 
             self.logs.write().unwrap().push(formatted_message);
-            TERMINAL_HANDLER.write(LoggableType::Log(self.logs.clone()));
+            self.send_to_terminal();
         }
-        */
     }
 
     pub fn log_without_type(&self, level: LogLevel, message: &str) {
-        /*
         if level >= self.debug_level {
             let formatted_message: String = format!(
                 "{}: [{:?}] {}",
@@ -98,9 +71,8 @@ impl Debugger {
             );
 
             self.logs.write().unwrap().push(formatted_message);
-            TERMINAL_HANDLER.write(LoggableType::Log(self.logs.clone()));
+            self.send_to_terminal();
         }
-        */
     }
 
     pub fn new_frame(&self) {
@@ -114,6 +86,13 @@ impl Debugger {
         self.tracked_values.set_last_frame(new_frame);
         self.tracked_values.set_frametime(frametime.as_micros());
         self.tracked_values.set_fps(fps);
+    }
+
+    fn send_to_terminal(&self) {
+        let widgets = vec![format!("fps: {}", self.tracked_values.get_fps()).to_string(), format!("frametime: {}", self.tracked_values.get_frametime()).to_string(), format!("frames: {}", self.tracked_values.get_total_frames()).to_string()];
+        let logs = self.logs.read().unwrap().clone();
+
+        TERMINAL_HANDLER.write(TerminalData { widgets, logs });
     }
 }
 
