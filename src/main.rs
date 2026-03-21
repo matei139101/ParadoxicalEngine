@@ -10,9 +10,6 @@ fn main() {
     enable_raw_mode().unwrap();
     execute!(std::io::stdout(), EnterAlternateScreen).unwrap();
 
-    Lazy::force(&TERMINAL_HANDLER);
-    Lazy::force(&DEBUGGER);
-
     let (async_sender, async_receiver) = mpsc::channel::<Box<dyn Any + Send + Sync>>();
 
     let event_bus = EventBus::new();

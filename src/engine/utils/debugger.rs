@@ -86,11 +86,14 @@ impl Debugger {
         self.tracked_values.set_last_frame(new_frame);
         self.tracked_values.set_frametime(frametime.as_micros());
         self.tracked_values.set_fps(fps);
+
+        self.send_to_terminal();
     }
 
     fn send_to_terminal(&self) {
         let widgets = vec![format!("fps: {}", self.tracked_values.get_fps()).to_string(), format!("frametime: {}", self.tracked_values.get_frametime()).to_string(), format!("frames: {}", self.tracked_values.get_total_frames()).to_string()];
-        let logs = self.logs.read().unwrap().clone();
+        let mut logs = self.logs.read().unwrap().clone();
+        logs.reverse();
 
         TERMINAL_HANDLER.write(TerminalData { widgets, logs });
     }

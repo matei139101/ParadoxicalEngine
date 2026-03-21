@@ -37,10 +37,7 @@ impl EventBus {
         async_receiver: Receiver<Box<dyn Any + Send + Sync>>,
     ) {
         while let Ok(event) = async_receiver.recv() {
-            let bus = self_ptr.clone();
-            thread::spawn(move || {
-                bus.emit(event);
-            });
+            self_ptr.emit(event);
         }
     }
 }

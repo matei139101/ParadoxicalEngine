@@ -23,7 +23,7 @@ impl TerminalHandler {
         let terminal_handler = TerminalHandler { terminal: RwLock::new(terminal), terminal_data: Default::default()};
 
         thread::spawn(move || {
-            let update_interval = Duration::from_secs(5);
+            let update_interval = Duration::from_secs(1);
             
             loop {
                 TERMINAL_HANDLER.update(&update_interval);
