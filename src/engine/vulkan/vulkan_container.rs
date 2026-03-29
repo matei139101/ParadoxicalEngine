@@ -88,6 +88,7 @@ pub struct VulkanContainer {
     viewports: SmallVec<[Viewport; 2]>,
     scissors: SmallVec<[Scissor; 2]>,
     vulkan_objects: HashMap<usize, VulkanObject>,
+    window: Arc<Window>,
 }
 
 impl VulkanContainer {
@@ -170,6 +171,7 @@ impl VulkanContainer {
             viewports,
             scissors,
             vulkan_objects: HashMap::new(),
+            window,
         };
 
         log!(Self, High, "Vulkan wrapper created successfully.");
@@ -751,6 +753,8 @@ impl VulkanContainer {
                 eprintln!("Failed to flush frame: {:?}", e);
             }
         }
+
+        self.window.request_redraw();
     }
 
     /*

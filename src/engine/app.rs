@@ -105,7 +105,6 @@ impl ApplicationHandler for App {
                 event_loop.exit();
             }
             WindowEvent::RedrawRequested => {
-                self.window.as_ref().unwrap().request_redraw();
             }
 
             WindowEvent::Resized(_size) => {
