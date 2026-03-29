@@ -1,9 +1,11 @@
-use std::{io, thread::sleep};
+use std::{io};
 
 use once_cell::sync::Lazy;
-use ratatui::{layout::{Constraint, Direction, Layout}, prelude::CrosstermBackend, widgets::{self, Block, Borders, List, ListDirection, Tabs}, Frame, Terminal};
+use ratatui::{layout::{Constraint, Direction, Layout}, prelude::CrosstermBackend, widgets::{Block, Borders, List, ListDirection, Tabs}, Terminal};
 
 use crate::prelude::*;
+
+type Job = Box<dyn FnOnce() + Send + 'static>;
 
 #[derive(Default)]
 pub struct TerminalData {
@@ -14,29 +16,26 @@ pub struct TerminalData {
 pub struct TerminalHandler {
     terminal: RwLock<Terminal<CrosstermBackend<io::Stdout>>>,
     terminal_data: RwLock<TerminalData>,
+    sender: mpsc::Sender<Job>,
 }
 
 impl TerminalHandler {
     fn new() -> TerminalHandler {
+        let (sender, receiver) = mpsc::channel::<Job>();
         let terminal = Terminal::new(CrosstermBackend::new(io::stdout())).unwrap();
+        let terminal_handler = TerminalHandler { terminal: RwLock::new(terminal), terminal_data: Default::default(), sender};
 
-        let terminal_handler = TerminalHandler { terminal: RwLock::new(terminal), terminal_data: Default::default()};
-
-        thread::spawn(move || {
-            let update_interval = Duration::from_secs(1);
-            
-            loop {
-                TERMINAL_HANDLER.update(&update_interval);
+        let _ = thread::Builder::new().name("Terminal".to_string()).spawn(move || {
+            while let Ok(job) = receiver.recv() {
+                job();
             }
-            });
+        });
 
         terminal_handler
     }
 
-    fn update(&self, update_interval: &Duration) {
-        self.draw_terminal();
-
-        sleep(*update_interval);
+    fn run(&self, f: impl FnOnce() + Send + 'static) {
+        self.sender.send(Box::new(f)).unwrap();
     }
 
     fn draw_terminal(&self) {
@@ -62,7 +61,10 @@ impl TerminalHandler {
     }
 
     pub fn write(&self, data: TerminalData) {
-        *self.terminal_data.write().unwrap() = data;
+        self.run(move || {
+            *TERMINAL_HANDLER.terminal_data.write().expect("Program failed to obtain terminal data...") = data;
+            TERMINAL_HANDLER.draw_terminal();
+        });
     }
 }
 

@@ -1,3 +1,4 @@
+use crate::engine::services::service::Service;
 use crate::engine::vulkan::vulkan_container::{VulkanContainer};
 use crate::resources::events::vulkan_events::{VulkanCreateObjectEvent};
 use crate::{prelude::*};
@@ -89,10 +90,6 @@ impl VulkanService {
         }
     }
 
-    pub fn update(&self) {
-        self.draw_frame(1);
-    }
-
     /*
 
     fn resize_viewport(&mut self, event_info: &ViewportResizeInfo) {
@@ -105,4 +102,18 @@ impl VulkanService {
         self.vulkan_container.delete_vulkan_object(*object_id);
     }
     */
+}
+
+impl Service for VulkanService {
+    fn update(&self) {
+        self.draw_frame(1);
+    }
+
+    fn is_ready(&self) -> bool {
+        if let Ok(vulkan_container) = self. vulkan_container.read() {
+            vulkan_container.is_some()
+        } else {
+            false
+        }
+    }
 }

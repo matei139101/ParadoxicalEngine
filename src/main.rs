@@ -1,7 +1,6 @@
 use crossterm::{execute, terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}};
-use once_cell::sync::Lazy;
 
-use crate::{engine::utils::terminal_handler::TERMINAL_HANDLER, prelude::*};
+use crate::{prelude::*};
 mod engine;
 mod prelude;
 mod resources;
@@ -23,7 +22,8 @@ fn main() {
     let app = make_app(async_sender.clone(), services.clone());
 
     let synchronizer = Synchronizer::new(services);
-    let _synchronizer_handle = synchronizer.start();
+    synchronizer.start();
+
     start_event_bus_thread(event_bus, async_receiver);
     start_window_thread(app);
 
@@ -46,7 +46,7 @@ fn start_event_bus_thread(
     event_bus_ptr: Arc<EventBus>,
     async_receiver: Receiver<Box<dyn Any + Send + Sync>>,
 ) {
-    thread::spawn(move || {
+    let _ = thread::Builder::new().name("EventBus".to_string()).spawn(move || {
         log!(High, "Starting async runtime"); 
         EventBus::run(event_bus_ptr.clone(), async_receiver);
     });
