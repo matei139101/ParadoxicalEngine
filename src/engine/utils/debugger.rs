@@ -46,6 +46,24 @@ impl Debugger {
         }
     }
 
+    pub fn update(&self) {
+        static LAST_DEBUGGER_UPDATE: RwLock<Option<Instant>> = RwLock::new(None);
+
+        if let Ok(last_update) = LAST_DEBUGGER_UPDATE.read() {
+            if let Some(last_update) = last_update.as_ref() {
+                if last_update.elapsed() <= Duration::from_secs(1) {
+                    return;
+                }
+            }
+            drop(last_update);
+        
+            *LAST_DEBUGGER_UPDATE.write().unwrap() = Some(Instant::now());
+            self.send_to_terminal();
+        } else {
+            log!(Self, Critical, "Failed to readlock LAST_UPDATE...");
+        }
+    }
+
     pub fn log_with_type<T>(&self, level: LogLevel, message: &str) {
         if level >= self.debug_level {
             let formatted_message: String = format!(
@@ -57,7 +75,6 @@ impl Debugger {
             );
 
             self.logs.write().unwrap().push(formatted_message);
-            self.send_to_terminal();
         }
     }
 
@@ -71,7 +88,6 @@ impl Debugger {
             );
 
             self.logs.write().unwrap().push(formatted_message);
-            self.send_to_terminal();
         }
     }
 
@@ -86,8 +102,6 @@ impl Debugger {
         self.tracked_values.set_last_frame(new_frame);
         self.tracked_values.set_frametime(frametime.as_micros());
         self.tracked_values.set_fps(fps);
-
-        self.send_to_terminal();
     }
 
     fn send_to_terminal(&self) {

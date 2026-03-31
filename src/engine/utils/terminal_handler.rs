@@ -16,26 +16,32 @@ pub struct TerminalData {
 pub struct TerminalHandler {
     terminal: RwLock<Terminal<CrosstermBackend<io::Stdout>>>,
     terminal_data: RwLock<TerminalData>,
-    sender: mpsc::Sender<Job>,
 }
 
 impl TerminalHandler {
     fn new() -> TerminalHandler {
-        let (sender, receiver) = mpsc::channel::<Job>();
         let terminal = Terminal::new(CrosstermBackend::new(io::stdout())).unwrap();
-        let terminal_handler = TerminalHandler { terminal: RwLock::new(terminal), terminal_data: Default::default(), sender};
 
-        let _ = thread::Builder::new().name("Terminal".to_string()).spawn(move || {
-            while let Ok(job) = receiver.recv() {
-                job();
-            }
-        });
-
-        terminal_handler
+        TerminalHandler { terminal: RwLock::new(terminal), terminal_data: Default::default()}
     }
 
-    fn run(&self, f: impl FnOnce() + Send + 'static) {
-        self.sender.send(Box::new(f)).unwrap();
+    pub fn update(&self) {
+        static LAST_TERMINAL_UPDATE: RwLock<Option<Instant>> = RwLock::new(None);
+
+        if let Ok(last_update) = LAST_TERMINAL_UPDATE.read() {
+            if let Some(last_update) = last_update.as_ref() {
+                if last_update.elapsed() <= Duration::from_secs(1) {
+                    return;
+                }
+            }
+            drop(last_update);
+        
+            *LAST_TERMINAL_UPDATE.write().unwrap() = Some(Instant::now());
+
+            self.draw_terminal();
+        } else {
+            log!(Self, Critical, "Failed to readlock LAST_UPDATE...");
+        }
     }
 
     fn draw_terminal(&self) {
@@ -61,10 +67,7 @@ impl TerminalHandler {
     }
 
     pub fn write(&self, data: TerminalData) {
-        self.run(move || {
-            *TERMINAL_HANDLER.terminal_data.write().expect("Program failed to obtain terminal data...") = data;
-            TERMINAL_HANDLER.draw_terminal();
-        });
+        *TERMINAL_HANDLER.terminal_data.write().expect("Program failed to obtain terminal data...") = data;
     }
 }
 

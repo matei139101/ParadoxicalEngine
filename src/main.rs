@@ -21,7 +21,7 @@ fn main() {
     ));
     let app = make_app(async_sender.clone(), services.clone());
 
-    let synchronizer = Synchronizer::new(services);
+    let synchronizer = Scheduler::new(services);
     synchronizer.start();
 
     start_event_bus_thread(event_bus, async_receiver);
