@@ -58,16 +58,15 @@ use vulkano::{
     render_pass::{Framebuffer, RenderPass, Subpass},
     shader::{self, ShaderModule, ShaderModuleCreateInfo, ShaderStages},
     swapchain::{self, Surface, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo},
-    sync::{self, GpuFuture},
+    sync::{ GpuFuture},
 };
 use winit::{event_loop::ActiveEventLoop, window::Window};
 
-use crate::engine::vulkan::structs::vertex;
 use crate::engine::vulkan::structs::viewport::ViewportInfo;
 use crate::engine::vulkan::vulkan_container::vulkano::pipeline::PipelineBindPoint;
 use crate::engine::{
     utils::structs::transform::Transform,
-    vulkan::structs::{push_constants::PushConstants, vertex::Vertex, vulkan_object::VulkanObject},
+    vulkan::structs::{push_constants::PushConstants, vulkan_object::VulkanObject},
 };
 
 pub struct VulkanContainer {
@@ -89,6 +88,7 @@ pub struct VulkanContainer {
     viewports: SmallVec<[Viewport; 2]>,
     scissors: SmallVec<[Scissor; 2]>,
     vulkan_objects: HashMap<usize, VulkanObject>,
+    window: Arc<Window>,
 }
 
 impl VulkanContainer {
@@ -171,6 +171,7 @@ impl VulkanContainer {
             viewports,
             scissors,
             vulkan_objects: HashMap::new(),
+            window,
         };
 
         log!(Self, High, "Vulkan wrapper created successfully.");
@@ -444,7 +445,7 @@ impl VulkanContainer {
         pipeline_info.stages = stages;
         pipeline_info.vertex_input_state = Some(
             VertexDefinition::definition(
-                &<vertex::Vertex as vulkano::pipeline::graphics::vertex_input::Vertex>::per_vertex(
+                &<Vertex as vulkano::pipeline::graphics::vertex_input::Vertex>::per_vertex(
                 ),
                 &vs.entry_point("main").unwrap(),
             )
@@ -577,9 +578,8 @@ impl VulkanContainer {
     pub fn create_vulkan_object(
         &mut self,
         id: &usize,
-        vertices: &Vec<Vertex>,
+        mesh: Mesh,
         object_transform: &Transform,
-        texture_path: &str,
     ) {
         log!(Self, High, "Creating vulkan object...");
 
@@ -594,11 +594,24 @@ impl VulkanContainer {
                     | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
                 ..Default::default()
             },
-            vertices.iter().cloned(),
+            mesh.vertices,
         )
         .expect("Failed to create vertex buffer");
 
-        let (texture_view, texture_sample) = self.load_png_texture(texture_path).unwrap();
+        let index_buffer = Buffer::from_iter(
+            self.memory_allocator.clone(),
+            BufferCreateInfo {
+                usage: BufferUsage::INDEX_BUFFER,
+                ..Default::default()
+            },
+            AllocationCreateInfo {
+                memory_type_filter: MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                ..Default::default()
+            },
+            mesh.indices,
+        ).expect("Failed to create index buffer");
+
+        let (texture_view, texture_sample) = self.process_image_data(mesh.image);
 
         let descriptor_set = DescriptorSet::new(
             self.descriptor_set_allocator.clone(),
@@ -618,7 +631,7 @@ impl VulkanContainer {
         .unwrap();
 
         let vulkan_object =
-            VulkanObject::new(vertex_buffer, object_transform.clone(), descriptor_set);
+            VulkanObject::new(vertex_buffer, index_buffer, object_transform.clone(), descriptor_set);
         self.vulkan_objects.insert(*id, vulkan_object);
         log!(Self, High, "Vulkan object created successfully.");
     }
@@ -683,9 +696,13 @@ impl VulkanContainer {
             let mvp = view_projection * model;
             let push_constants = PushConstants::new(mvp);
 
-            let vertex_buffer = vulkan_object.1.get_buffer().clone();
+            let vertex_buffer = vulkan_object.1.get_vertex_buffer().clone();
+            let index_buffer = vulkan_object.1.get_index_buffer().clone();
             builder
                 .bind_vertex_buffers(0, vertex_buffer.clone())
+                .unwrap();
+            builder
+                .bind_index_buffer(index_buffer.clone())
                 .unwrap();
 
             builder
@@ -701,7 +718,7 @@ impl VulkanContainer {
                 .unwrap();
             unsafe {
                 builder
-                    .draw(vertex_buffer.len().try_into().unwrap(), 1, 0, 0)
+                    .draw_indexed(index_buffer.len().try_into().unwrap(), 1, 0, 0, 0)
                     .unwrap()
             };
         }
@@ -736,6 +753,8 @@ impl VulkanContainer {
                 eprintln!("Failed to flush frame: {:?}", e);
             }
         }
+
+        self.window.request_redraw();
     }
 
     /*
@@ -801,79 +820,59 @@ impl VulkanContainer {
         return view_projection;
     }
 
-    //[TO-DO]: Almost entirely AI generated so I'll need to look this over some time to remake it properly.
-    fn load_png_texture(
-        &mut self,
-        path: &str,
-    ) -> Result<(Arc<ImageView>, Arc<Sampler>), Box<dyn std::error::Error>> {
-        // Load PNG file
-        let img = image::open(path)?.to_rgba8();
-        let (width, height) = img.dimensions();
-        let image_data = img.into_raw();
-
-        // Create staging buffer with the image data
+    fn process_image_data(&mut self, image_data: gltf::image::Data) -> (Arc<ImageView>, Arc<Sampler>) { 
         let staging_buffer = Buffer::from_iter(
             self.memory_allocator.clone(),
-            BufferCreateInfo {
-                usage: BufferUsage::TRANSFER_SRC,
-                ..Default::default()
-            },
-            AllocationCreateInfo {
-                memory_type_filter: MemoryTypeFilter::PREFER_HOST
-                    | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                ..Default::default()
-            },
-            image_data,
-        )?;
+            BufferCreateInfo {usage: BufferUsage::TRANSFER_SRC, ..Default::default()},
+            AllocationCreateInfo { memory_type_filter: MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE, ..Default::default()},
+            image_data.pixels
+        ).unwrap_or_else(|_| {log!(Self, Critical, "Failed to process_image_data"); panic!()});
 
-        // Create the GPU image
         let image = Image::new(
             self.memory_allocator.clone(),
             ImageCreateInfo {
                 image_type: ImageType::Dim2d,
                 format: Format::R8G8B8A8_SRGB,
-                extent: [width, height, 1],
+                extent: [image_data.width, image_data.height, 1],
                 usage: ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
                 ..Default::default()
             },
             AllocationCreateInfo::default(),
-        )?;
+        ).unwrap_or_else(|_| {log!(Self, Critical, "Failed to process_image_data"); panic!()});
 
-        // Upload the data to GPU
         let mut builder = AutoCommandBufferBuilder::primary(
             self.command_buffer_allocator.clone(),
             self.queue.queue_family_index(),
             CommandBufferUsage::OneTimeSubmit,
-        )?;
+        ).unwrap_or_else(|_| {log!(Self, Critical, "Failed to process_image_data"); panic!()});
 
         builder.copy_buffer_to_image(CopyBufferToImageInfo::buffer_image(
             staging_buffer,
             image.clone(),
-        ))?;
+        )).unwrap_or_else(|_| {log!(Self, Critical, "Failed to process_image_data"); panic!()});
 
-        let command_buffer = builder.build()?;
+        let command_buffer = builder.build().unwrap();
+        vulkano::sync::now(self.queue.device().clone())
+            .then_execute(self.queue.clone(), command_buffer).unwrap()
+            .then_signal_fence_and_flush().unwrap()
+            .wait(None)
+            .unwrap_or_else(|_| {log!(Self, Critical, "Failed to process_image_data"); panic!()});
 
-        // Execute the upload
-        let future = sync::now(self.logical_device.clone())
-            .then_execute(self.queue.clone(), command_buffer)?
-            .then_signal_fence_and_flush()?;
-
-        future.wait(None)?;
-
-        // Create image view
-        let texture_view = ImageView::new(image.clone(), ImageViewCreateInfo::from_image(&image))?;
-
-        // Create sampler
-        let texture_sampler = Sampler::new(
-            self.logical_device.clone(),
+        // Image view
+        let image_view = ImageView::new_default(image).unwrap();
+        
+        // Sampler
+        let sampler = Sampler::new(
+            self.queue.device().clone(),
             SamplerCreateInfo {
                 mag_filter: Filter::Linear,
                 min_filter: Filter::Linear,
+                mipmap_mode: vulkano::image::sampler::SamplerMipmapMode::Linear,
                 address_mode: [SamplerAddressMode::Repeat; 3],
                 ..Default::default()
             },
-        )?;
+        ).unwrap_or_else(|_| {log!(Self, Critical, "Failed to process_image_data"); panic!()});
 
-        Ok((texture_view, texture_sampler))
+        (image_view, sampler)
     }
 }

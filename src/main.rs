@@ -1,11 +1,15 @@
-use crate::prelude::*;
+use crossterm::{execute, terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}};
+
+use crate::{prelude::*};
 mod engine;
 mod prelude;
 mod resources;
 
 fn main() {
-    let (async_sender, async_receiver) = mpsc::unbounded_channel::<Box<dyn Any + Send + Sync>>();
-    let (input_sender, input_receiver) = mpsc::unbounded_channel::<DeviceEvent>();
+    enable_raw_mode().unwrap();
+    execute!(std::io::stdout(), EnterAlternateScreen).unwrap();
+
+    let (async_sender, async_receiver) = mpsc::channel::<Box<dyn Any + Send + Sync>>();
 
     let event_bus = EventBus::new();
 
@@ -14,38 +18,37 @@ fn main() {
         repositories,
         event_bus.clone(),
         async_sender.clone(),
-        input_receiver,
     ));
-    let app = make_app(async_sender.clone(), input_sender.clone());
+    let app = make_app(async_sender.clone(), services.clone());
 
-    let synchronizer = Synchronizer::new(services);
-    let synchronizer_handle = synchronizer.start();
+    let synchronizer = Scheduler::new(services);
+    synchronizer.start();
+
     start_event_bus_thread(event_bus, async_receiver);
     start_window_thread(app);
+
+    disable_raw_mode().unwrap();
+    execute!(std::io::stdout(), LeaveAlternateScreen).unwrap();
 }
 
 fn make_app(
-    async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-    input_sender: UnboundedSender<DeviceEvent>,
+    async_sender: Sender<Box<dyn Any + Send + Sync>>,
+    services: Arc<Services>,
 ) -> (App, EventLoop<()>) {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let app = App::new(async_sender, input_sender);
+    let app = App::new(services.clone(), async_sender);
     (app, event_loop)
 }
 
 fn start_event_bus_thread(
     event_bus_ptr: Arc<EventBus>,
-    async_receiver: UnboundedReceiver<Box<dyn Any + Send + Sync>>,
+    async_receiver: Receiver<Box<dyn Any + Send + Sync>>,
 ) {
-    thread::spawn(move || {
-        log!(High, "Starting async runtime");
-        let async_runtime = tokio::runtime::Runtime::new().unwrap();
-
-        async_runtime.block_on(async {
-            EventBus::run(event_bus_ptr.clone(), async_receiver).await;
-        })
+    let _ = thread::Builder::new().name("EventBus".to_string()).spawn(move || {
+        log!(High, "Starting async runtime"); 
+        EventBus::run(event_bus_ptr.clone(), async_receiver);
     });
 }
 

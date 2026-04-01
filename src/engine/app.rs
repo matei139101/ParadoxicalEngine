@@ -4,19 +4,17 @@ use crate::{
         entities::{base_controller::BaseController, base_cube::BaseCube},
         events::{
             entity_events::CreateEntityEvent,
-            vulkan_events::{CreateVulkanInstanceEvent},
         },
     },
 };
 use glam::vec3;
 use std::{
     any::Any,
-    sync::{Arc, Mutex},
+    sync::{Arc},
 };
-use tokio::sync::{mpsc::UnboundedSender};
 use winit::{
     application::ApplicationHandler,
-    event::{DeviceEvent, DeviceId, WindowEvent},
+    event::{DeviceEvent, DeviceId,WindowEvent},
     event_loop::ActiveEventLoop,
     keyboard::PhysicalKey,
     window::{Window, WindowId},
@@ -30,20 +28,20 @@ use crate::engine::{
 pub struct App {
     window: Option<Arc<Window>>,
     viewport_info: Option<ViewportInfo>,
-    async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-    input_sender: UnboundedSender<DeviceEvent>,
+    services: Arc<Services>,
+    async_sender: Sender<Box<dyn Any + Send + Sync>>,
 }
 
 impl App {
     pub fn new(
-        async_sender: UnboundedSender<Box<dyn Any + Send + Sync>>,
-        input_sender: UnboundedSender<DeviceEvent>,
+        services: Arc<Services>,
+        async_sender: Sender<Box<dyn Any + Send + Sync>>,
     ) -> Self {
         App {
             window: Default::default(),
             viewport_info: Default::default(),
+            services,
             async_sender,
-            input_sender,
         }
     }
 }
@@ -62,19 +60,12 @@ impl ApplicationHandler for App {
             ],
         ));
 
-        let vulkan_container = Arc::new(Mutex::new(VulkanContainer::new(
+        let vulkan_container = VulkanContainer::new(
             event_loop,
             self.window.as_ref().unwrap().clone(),
             self.viewport_info.as_ref().unwrap(),
-        )));
-
-        let create_vk_container_message = CreateVulkanInstanceEvent {
-            vulkan_container: vulkan_container.clone(),
-        };
-
-        let _ = self
-            .async_sender
-            .send(Box::new(create_vk_container_message));
+        );
+        self.services.get_vulkan_service().create_vulkan_container(vulkan_container);
 
         //For testing purposes
         let cube1_transform = Transform::new(vec3(-1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0));
@@ -114,7 +105,6 @@ impl ApplicationHandler for App {
                 event_loop.exit();
             }
             WindowEvent::RedrawRequested => {
-                self.window.as_ref().unwrap().request_redraw();
             }
 
             WindowEvent::Resized(_size) => {
@@ -128,6 +118,8 @@ impl ApplicationHandler for App {
                 if event.physical_key == PhysicalKey::Code(winit::keyboard::KeyCode::KeyQ) {
                     event_loop.exit();
                 }
+
+                self.services.get_input_service().input_key(event);
             }
             _ => (),
         }
@@ -140,6 +132,6 @@ impl ApplicationHandler for App {
         _device_id: DeviceId,
         event: DeviceEvent,
     ) {
-        let _ = self.input_sender.send(event);
+         self.services.get_input_service().input_axis(event);
     }
 }

@@ -32,17 +32,12 @@ impl EventBus {
         }
     }
 
-    pub async fn run(
+    pub fn run(
         self_ptr: Arc<EventBus>,
-        async_receiver: UnboundedReceiver<Box<dyn Any + Send + Sync>>,
+        async_receiver: Receiver<Box<dyn Any + Send + Sync>>,
     ) {
-        let mut stream = UnboundedReceiverStream::new(async_receiver);
-
-        while let Some(event) = stream.next().await {
-            let bus = self_ptr.clone();
-            tokio::spawn(async move {
-                bus.clone().emit(event);
-            });
+        while let Ok(event) = async_receiver.recv() {
+            self_ptr.emit(event);
         }
     }
 }

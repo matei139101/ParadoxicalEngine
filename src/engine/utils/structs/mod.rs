@@ -1,10 +1,11 @@
-pub mod model;
+pub mod mesh;
 pub mod repositories;
 pub mod services;
 pub mod transform;
 pub mod entity;
 
-pub use model::Model;
+pub use mesh::Mesh;
+pub use mesh::Vertex;
 pub use repositories::Repositories;
 pub use services::Services;
 pub use transform::Transform;
