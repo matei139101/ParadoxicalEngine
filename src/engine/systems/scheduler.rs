@@ -1,6 +1,5 @@
 use std::thread::{sleep};
-
-use crate::{engine::utils::terminal_handler::TERMINAL_HANDLER, prelude::{service::Service, *}};
+use crate::prelude::*;
 
 pub struct Scheduler {
     services: Arc<Services>,
@@ -36,8 +35,8 @@ impl Scheduler {
         log!(Self, Critical, "Starting auxilliary thread...");
         let _ = thread::Builder::new().name("Auxilliary".to_string()).spawn(move || {
             loop {
-                DEBUGGER.update();
-                TERMINAL_HANDLER.update();
+                LOGGER.update();
+                DASHBOARD.update();
             }
         });
     }

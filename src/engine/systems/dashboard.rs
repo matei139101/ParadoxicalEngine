@@ -13,16 +13,16 @@ pub struct TerminalData {
     pub logs: Vec<String>,
 }
 
-pub struct TerminalHandler {
+pub struct Dashboard {
     terminal: RwLock<Terminal<CrosstermBackend<io::Stdout>>>,
     terminal_data: RwLock<TerminalData>,
 }
 
-impl TerminalHandler {
-    fn new() -> TerminalHandler {
+impl Dashboard {
+    fn new() -> Dashboard {
         let terminal = Terminal::new(CrosstermBackend::new(io::stdout())).unwrap();
 
-        TerminalHandler { terminal: RwLock::new(terminal), terminal_data: Default::default()}
+        Dashboard { terminal: RwLock::new(terminal), terminal_data: Default::default()}
     }
 
     pub fn update(&self) {
@@ -67,8 +67,8 @@ impl TerminalHandler {
     }
 
     pub fn write(&self, data: TerminalData) {
-        *TERMINAL_HANDLER.terminal_data.write().expect("Program failed to obtain terminal data...") = data;
+        *DASHBOARD.terminal_data.write().expect("Program failed to obtain terminal data...") = data;
     }
 }
 
-pub static TERMINAL_HANDLER: Lazy<TerminalHandler> = Lazy::new(TerminalHandler::new);
+pub static DASHBOARD: Lazy<Dashboard> = Lazy::new(Dashboard::new);

@@ -3,7 +3,7 @@ use std::{
 };
 
 use once_cell::sync::Lazy;
-use crate::{engine::utils::{terminal_handler::{TerminalData, TERMINAL_HANDLER}, tracked_values::TrackedValues}, prelude::*};
+use crate::{engine::utils::tracked_values::TrackedValues, prelude::{dashboard::TerminalData, *}};
 
 #[derive(Debug, Eq, PartialEq, PartialOrd)]
 pub enum LogLevel {
@@ -28,17 +28,17 @@ impl LogLevel {
     }
 }
 
-pub struct Debugger {
+pub struct Logger {
     logs: Arc<RwLock<Vec<String>>>,
     tracked_values: Arc<TrackedValues>,
 
     debug_level: LogLevel,
 }
 
-impl Debugger {
+impl Logger {
     pub fn new() -> Self {
         let debug_level = LogLevel::from_string(FILE_HANDLER.get_config().get("Debug", "debuglevel").unwrap());
-        Debugger {
+        Logger {
             logs: Arc::new(RwLock::new(Vec::new())),
             tracked_values: Arc::new(TrackedValues::new()),
 
@@ -47,9 +47,9 @@ impl Debugger {
     }
 
     pub fn update(&self) {
-        static LAST_DEBUGGER_UPDATE: RwLock<Option<Instant>> = RwLock::new(None);
+        static LAST_LOGGER_UPDATE: RwLock<Option<Instant>> = RwLock::new(None);
 
-        if let Ok(last_update) = LAST_DEBUGGER_UPDATE.read() {
+        if let Ok(last_update) = LAST_LOGGER_UPDATE.read() {
             if let Some(last_update) = last_update.as_ref() {
                 if last_update.elapsed() <= Duration::from_secs(1) {
                     return;
@@ -57,7 +57,7 @@ impl Debugger {
             }
             drop(last_update);
         
-            *LAST_DEBUGGER_UPDATE.write().unwrap() = Some(Instant::now());
+            *LAST_LOGGER_UPDATE.write().unwrap() = Some(Instant::now());
             self.send_to_terminal();
         } else {
             log!(Self, Critical, "Failed to readlock LAST_UPDATE...");
@@ -109,18 +109,18 @@ impl Debugger {
         let mut logs = self.logs.read().unwrap().clone();
         logs.reverse();
 
-        TERMINAL_HANDLER.write(TerminalData { widgets, logs });
+        DASHBOARD.write(TerminalData { widgets, logs });
     }
 }
 
-pub static DEBUGGER: Lazy<Debugger> = Lazy::new(Debugger::new);
+pub static LOGGER: Lazy<Logger> = Lazy::new(Logger::new);
 
 #[macro_export]
 macro_rules! log {
     ($culprit:ty, $level:expr, $msg:expr) => {
-        $crate::DEBUGGER.log_with_type::<$culprit>($level, $msg);
+        $crate::LOGGER.log_with_type::<$culprit>($level, $msg);
     };
     ($level:expr, $msg:expr) => {
-        $crate::DEBUGGER.log_without_type($level, $msg);
+        $crate::LOGGER.log_without_type($level, $msg);
     };
 }
