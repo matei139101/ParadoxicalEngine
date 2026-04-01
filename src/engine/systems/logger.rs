@@ -3,7 +3,7 @@ use std::{
 };
 
 use once_cell::sync::Lazy;
-use crate::{engine::utils::tracked_values::TrackedValues, prelude::{dashboard::TerminalData, *}};
+use crate::{engine::utils::tracked_values::TrackedValues, prelude::{dashboard::DashboardData, *}};
 
 #[derive(Debug, Eq, PartialEq, PartialOrd)]
 pub enum LogLevel {
@@ -105,11 +105,13 @@ impl Logger {
     }
 
     fn send_to_terminal(&self) {
-        let widgets = vec![format!("fps: {}", self.tracked_values.get_fps()).to_string(), format!("frametime: {}", self.tracked_values.get_frametime()).to_string(), format!("frames: {}", self.tracked_values.get_total_frames()).to_string()];
+        *DASHBOARD.dashboard_data().render_stats().fps().write().unwrap_or_else(|_| {log!(Self, Critical, "Failed to writelock dashboard fps..."); panic!()}) = format!("fps: {}", self.tracked_values.get_fps()).to_string();
+        *DASHBOARD.dashboard_data().render_stats().frametime().write().unwrap_or_else(|_| {log!(Self, Critical, "Failed to writelock dashboard frametime..."); panic!()}) = format!("frametime: {}", self.tracked_values.get_frametime()).to_string();
+        *DASHBOARD.dashboard_data().render_stats().frames().write().unwrap_or_else(|_| {log!(Self, Critical, "Failed to writelock dashboard frames..."); panic!()}) = format!("frames: {}", self.tracked_values.get_total_frames()).to_string();
+
         let mut logs = self.logs.read().unwrap().clone();
         logs.reverse();
-
-        DASHBOARD.write(TerminalData { widgets, logs });
+        *DASHBOARD.dashboard_data().logs().write().unwrap_or_else(|_| {log!(Self, Critical, "Failed to writelock dashboard logs..."); panic!()}) = logs;
     }
 }
 
