@@ -7,10 +7,10 @@ pub struct EventBus {
 }
 
 impl EventBus {
-    pub fn new() -> Arc<EventBus> {
-        Arc::new(EventBus {
+    pub fn new() -> Self {
+        EventBus {
             observers: RwLock::new(HashMap::new()),
-        })
+        }
     }
 
     pub fn observe<E: 'static + Send + Sync>(&self, callback: Callback) {
@@ -32,12 +32,9 @@ impl EventBus {
         }
     }
 
-    pub fn run(
-        self_ptr: Arc<EventBus>,
-        async_receiver: Receiver<Box<dyn Any + Send + Sync>>,
-    ) {
-        while let Ok(event) = async_receiver.recv() {
-            self_ptr.emit(event);
+    pub fn run(self: Arc<Self>, receiver: Receiver<Box<dyn Any + Send + Sync>>) {
+        while let Ok(event) = receiver.recv() {
+            self.emit(event);
         }
     }
 }
