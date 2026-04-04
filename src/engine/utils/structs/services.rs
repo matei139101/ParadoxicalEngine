@@ -1,9 +1,10 @@
-use crate::prelude::*;
+use crate::prelude::{gamestate_service::GamestateService, *};
 
 pub struct Services {
     input_service: Arc<InputService>,
     entity_service: Arc<EntityService>,
     vulkan_service: Arc<VulkanService>,
+    gamestate_service: Arc<GamestateService>,
 }
 
 impl Services {
@@ -16,6 +17,7 @@ impl Services {
             input_service: InputService::new(repositories.clone()), 
             entity_service: EntityService::new(repositories.clone(), event_bus_ptr.clone(), async_sender), 
             vulkan_service: VulkanService::new(repositories.clone(), event_bus_ptr.clone()),
+            gamestate_service: GamestateService::new(),
         }
     }
 
@@ -29,5 +31,9 @@ impl Services {
 
     pub fn get_vulkan_service(&self) -> Arc<VulkanService> {
         self.vulkan_service.clone()
+    }
+
+    pub fn get_gamestate_service(&self) -> Arc<GamestateService> {
+        self.gamestate_service.clone()
     }
 }

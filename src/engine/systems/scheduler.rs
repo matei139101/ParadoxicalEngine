@@ -17,6 +17,7 @@ impl Scheduler {
         self.make_auxilliary_thread();
         self.make_service_thread();
         self.make_window_thread();
+        self.make_window_thread();
     }
 
     fn make_service_thread(&self) {

@@ -20,8 +20,8 @@ fn main() {
         async_sender.clone(),
     ));
 
-    let synchronizer = Scheduler::new(async_sender, services, event_bus);
-    synchronizer.start(async_receiver);
+    let scheduler = Scheduler::new(async_sender, services, event_bus);
+    scheduler.start(async_receiver);
 
     disable_raw_mode().unwrap();
     execute!(std::io::stdout(), LeaveAlternateScreen).unwrap();
