@@ -2,6 +2,10 @@ use std::sync::{Arc, RwLock};
 
 use crate::prelude::*;
 
+/**
+ * A service responsible for all engine-wide values. Currently unfinished and under active
+ * development.
+ */
 pub struct GamestateService {
     active_player: RwLock<u8>
 }

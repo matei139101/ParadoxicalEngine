@@ -1,6 +1,12 @@
 use crate::prelude::*;
 use crate::resources::events::entity_events::CreateEntityEvent;
 
+/**
+ * A service responsible for handling all entity related events such as creating & deleting entities, handing
+ * entity update calls, and handling event related events.
+ *
+ * Makes use of an [`EntityRepository`] to store entities and their various components.
+ */
 pub struct EntityService {
     repositories: Arc<Repositories>,
     event_bus_ptr: Arc<EventBus>,
@@ -8,6 +14,11 @@ pub struct EntityService {
 }
 
 impl EntityService {
+    /**
+     * Returns a new entity service which listens to events provided by the given event bus, sends
+     * events when necessary through the provided channel, and stores/reads data to and from the
+     * provided repositories.
+     */
     pub fn new(
         repositories: Arc<Repositories>,
         event_bus_ptr: Arc<EventBus>,
@@ -24,6 +35,9 @@ impl EntityService {
         entity_service
     }
 
+    /**
+     * Assigns handlers for different events listened to by this service.
+     */
     pub fn observe_events(self_ptr: Arc<EntityService>) {
         let bus_arc = {
             self_ptr.event_bus_ptr.clone()
@@ -38,6 +52,9 @@ impl EntityService {
             }));
     }
 
+    /**
+     * Calls the dedicated load method for the given entity.
+     */
     fn create_entity(&self, entity: &Box<dyn Entity>) {
         entity.load(
             self.repositories.get_entity_repository(),
@@ -45,6 +62,11 @@ impl EntityService {
         );
     }
 
+    /**
+     * Calls each update function stored in the entity repository. Currently also manually resets
+     * the camera control axes, this is to ensure the axes only reset after the entities have
+     * updated, but is only a temporary workaround until a better solution is found.
+     */
     pub fn update(&self) {
         if let Some(update_functions) = self.repositories.get_entity_repository().get_update_functions() {
             for (_index, function) in update_functions {

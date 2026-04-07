@@ -3,6 +3,10 @@ use crate::engine::vulkan::vulkan_container::{VulkanContainer};
 use crate::resources::events::vulkan_events::{VulkanCreateObjectEvent};
 use crate::{prelude::*};
 
+/// Defines the vulkan service.
+///
+/// The vulkan service compresses the vast amount of calls made
+/// to the [`VulkanContainer`] and exposes them to events and the engine itself for use.
 pub struct VulkanService {
     repositories: Arc<Repositories>,
     vulkan_container: Arc<RwLock<Option<VulkanContainer>>>,
@@ -10,6 +14,8 @@ pub struct VulkanService {
 }
 
 impl VulkanService {
+    /// Returns an [`Arc`] pointer to a new vulkan service which listens to an [`EventBus`] and
+    /// reads/stores data to and from the given repositories.
     pub fn new(
         repositories: Arc<Repositories>,
         event_bus_ptr: Arc<EventBus>,
@@ -25,6 +31,7 @@ impl VulkanService {
         vulkan_service
     }
 
+    /// Assigns handlers to ovserved events on the [`EventBus`]. Not meant for manual use.
     pub fn observe_events(self_ptr: Arc<VulkanService>) {
         let bus_arc = self_ptr.event_bus_ptr.clone();
 
@@ -42,6 +49,8 @@ impl VulkanService {
             }));
     }
 
+    /// Stores the [`VulkanContainer`] for further use when a new one is created by the window.
+    /// Inefficient and slow, likely to be reworked in the near future.
     pub fn create_vulkan_container(&self, new_container: VulkanContainer) {
         if let Ok(mut vulkan_container) = self.vulkan_container.write() {
             *vulkan_container = Some(new_container);
@@ -50,6 +59,7 @@ impl VulkanService {
         }
     }
 
+    /// Draws a frame to the window from the perspective of the given player id.
     fn draw_frame(&self, player_id: i16) {
         if let Some(camera_transform) = self
             .repositories
@@ -72,6 +82,7 @@ impl VulkanService {
         crate::LOGGER.new_frame();
     }
 
+    /// Creates a vulkan object usable by vulkan during rendering from a given mesh.
     fn create_vulkan_object(
         &self,
         object_id: &usize,

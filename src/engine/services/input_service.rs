@@ -2,11 +2,16 @@ use winit::{event::{ElementState, KeyEvent}, keyboard::{KeyCode, PhysicalKey}};
 
 use crate::prelude::*;
 
+/// A service responsible for handling all input events from the OS such as translating raw mouse and keyboard input into axis values.
+///
+/// Makes use of an [`InputRepository`] to store axis values.
 pub struct InputService {
     repositories: Arc<Repositories>,
 }
 
 impl InputService {
+     /// Returns an [`Arc`] pointer to a new input service which uses the given repositories for
+     /// storing and reading data.
     pub fn new(
         repositories: Arc<Repositories>,
     ) -> Arc<InputService> {
@@ -14,7 +19,8 @@ impl InputService {
 
         Arc::new(input_service)
     }
-
+     
+    /// Translates raw key events into axis values then stores them on the input repository for use.
     pub fn input_key(&self, event: KeyEvent) {
         let input_repo = self.repositories.get_input_repository();
         if event.state == ElementState::Pressed {
@@ -36,6 +42,8 @@ impl InputService {
         }
     }
 
+    /// Translates raw device events from mouse input into axis values then stores them on the input
+    /// repository for later use.
     pub fn input_axis(&self, event: DeviceEvent) {
         let input_repo = self.repositories.get_input_repository();
 
