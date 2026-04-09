@@ -6,6 +6,11 @@ use ratatui::{layout::{Constraint, Direction, Layout, Rect}, prelude::CrosstermB
 
 use crate::prelude::*;
 
+/// Defines the dashboard system
+/// 
+/// The dashboard system contains all logic directly related to rendering the dashboard in the
+/// terminal. All data to be displayed is stored in the [`DashboardData`] struct and rendered to
+/// the terminal once an update is called.
 pub struct Dashboard {
     terminal: RwLock<Terminal<CrosstermBackend<io::Stdout>>>,
     dashboard_data: DashboardData,
@@ -14,12 +19,14 @@ pub struct Dashboard {
 }
 
 impl Dashboard {
+    /// Returns a new Dashboard created using default data.
     fn new() -> Self {
         let terminal = Terminal::new(CrosstermBackend::new(io::stdout())).unwrap();
 
         Self { terminal: RwLock::new(terminal), dashboard_data: DashboardData::new(), selected_tab: 0.into()}
     }
 
+    /// Handles whether the terminal should be drawn to and listens to input.
     pub fn update(&self) {
         static LAST_TERMINAL_UPDATE: RwLock<Option<Instant>> = RwLock::new(None);
 
@@ -48,6 +55,7 @@ impl Dashboard {
         }
     }
 
+    /// Draws the dashboard to the terminal.
     fn draw_terminal(&self) {
         self.terminal.write().expect("Program failed to writelock the terminal for logging...").draw(|frame| {
             let layout = Layout::default()
@@ -73,10 +81,7 @@ impl Dashboard {
         }).unwrap();
     }
 
-    fn render_dashboard(&self) {
-
-    }
-
+    /// Draws the logs to the terminal.
     fn render_logs(&self, frame: &mut Frame, layout: Rect) {
         let logs = self.dashboard_data.logs.read().unwrap_or_else(|_| {log!(Self, Critical, "Failed to readlock logs..."); panic!()}).clone();
 
@@ -86,6 +91,7 @@ impl Dashboard {
         );
     }
 
+    /// Draws the statistics to the terminal.
     fn render_stats(&self, frame: &mut Frame, layout: Rect) {
         let fps = self.dashboard_data.render_stats.fps.read().unwrap_or_else(|_| {log!(Self, Critical, "Failed to readlock fps stat..."); panic!()}).clone();
         let frametime = self.dashboard_data.render_stats.frametime.read().unwrap_or_else(|_| {log!(Self, Critical, "Failed to readlock frametime stat..."); panic!()}).clone();
@@ -98,6 +104,8 @@ impl Dashboard {
         );
     }
 
+    /// Returns a reference to dashboard data for reading or editing purposes. Any changes will be
+    /// displayed on the next update.
     pub fn dashboard_data(&self) -> &DashboardData {
         &self.dashboard_data
     }
@@ -110,6 +118,7 @@ pub struct DashboardData {
     logs: RwLock<Vec<String>>,
 }
 
+/// Defines the struct containing all data rendered to the [`Dashboard`].
 impl DashboardData {
     pub fn new() -> Self {
         Self { render_stats: RenderStats::new(), logs: Vec::new().into() }
@@ -124,6 +133,7 @@ impl DashboardData {
     }
 }
 
+/// Defines the struct containing all render statictics used by [`DashboardData`].
 pub struct RenderStats {
     fps: RwLock<String>,
     frametime: RwLock<String>,

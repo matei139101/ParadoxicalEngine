@@ -28,6 +28,10 @@ impl LogLevel {
     }
 }
 
+/// Defines the logger system.
+///
+/// The logger handles the various debug logging and statistics needed for development, performance
+/// tracking and crashlogging.
 pub struct Logger {
     logs: Arc<RwLock<Vec<String>>>,
     tracked_values: Arc<TrackedValues>,
@@ -36,6 +40,7 @@ pub struct Logger {
 }
 
 impl Logger {
+    /// Returns a new logger created using a config file and default values.
     pub fn new() -> Self {
         let debug_level = LogLevel::from_string(FILE_HANDLER.get_config().get("Debug", "debuglevel").unwrap());
         Logger {
@@ -46,6 +51,8 @@ impl Logger {
         }
     }
 
+    /// Periodically sends the data from the logger to the dashboard to be rendered in the
+    /// terminal.
     pub fn update(&self) {
         static LAST_LOGGER_UPDATE: RwLock<Option<Instant>> = RwLock::new(None);
 
@@ -64,6 +71,7 @@ impl Logger {
         }
     }
 
+    /// Handles log calls containing the type of the caller.
     pub fn log_with_type<T>(&self, level: LogLevel, message: &str) {
         if level >= self.debug_level {
             let formatted_message: String = format!(
@@ -78,6 +86,7 @@ impl Logger {
         }
     }
 
+    /// Handles log calls not containing the type of the caller.
     pub fn log_without_type(&self, level: LogLevel, message: &str) {
         if level >= self.debug_level {
             let formatted_message: String = format!(
@@ -91,6 +100,7 @@ impl Logger {
         }
     }
 
+    /// Counts an additional frame to statistics and measures framedata.
     pub fn new_frame(&self) {
         let last_frame = self.tracked_values.get_last_frame();
         let new_frame = Instant::now();
@@ -104,6 +114,7 @@ impl Logger {
         self.tracked_values.set_fps(fps);
     }
 
+    /// Sends all logged data to the [`Dashboard`] to be displayed.
     fn send_to_terminal(&self) {
         *DASHBOARD.dashboard_data().render_stats().fps().write().unwrap_or_else(|_| {log!(Self, Critical, "Failed to writelock dashboard fps..."); panic!()}) = format!("fps: {}", self.tracked_values.get_fps()).to_string();
         *DASHBOARD.dashboard_data().render_stats().frametime().write().unwrap_or_else(|_| {log!(Self, Critical, "Failed to writelock dashboard frametime..."); panic!()}) = format!("frametime: {}", self.tracked_values.get_frametime()).to_string();
@@ -117,6 +128,8 @@ impl Logger {
 
 pub static LOGGER: Lazy<Logger> = Lazy::new(Logger::new);
 
+/// A macro which unifies logging with and without type into one for ease of use and handles
+/// appropriately.
 #[macro_export]
 macro_rules! log {
     ($culprit:ty, $level:expr, $msg:expr) => {
