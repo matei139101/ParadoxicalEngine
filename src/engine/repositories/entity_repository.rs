@@ -10,9 +10,9 @@ use std::panic;
 pub struct EntityRepository {
     entities: RwLock<HashMap<usize, String>>,
     transforms: RwLock<HashMap<usize, Transform>>,
-    controllers: RwLock<HashMap<usize, i16>>,
+    controllers: RwLock<HashMap<usize, u8>>,
 
-    update_functions: RwLock<HashMap<usize, fn(Arc<Repositories>)>>,
+    update_functions: RwLock<HashMap<usize, fn(&Services, &Repositories)>>,
     last_id: RwLock<usize>,
 }
 
@@ -30,7 +30,7 @@ impl EntityRepository {
             entities: Default::default(),
             transforms: Default::default(),
             controllers: Default::default(),
-            
+
             update_functions: Default::default(),
             last_id: RwLock::new(0),
         }
@@ -133,7 +133,7 @@ impl EntityRepository {
      * repository.add_controller(id, player_number);
      * ```
      */
-    pub fn add_controller(&self, id: usize, player_number: i16) {
+    pub fn add_controller(&self, id: usize, player_number: u8) {
         if let Ok(mut controllers) = self.controllers.write() {
             controllers.insert(id, player_number);
             log!(Self, Medium, "Added a player.");
@@ -148,7 +148,7 @@ impl EntityRepository {
      *
      * Temporary placeholder! Subject to change if not complete removal in the near future.
      */
-    pub fn add_update_function(&self, id: usize, function: fn(Arc<Repositories>)) {
+    pub fn add_update_function(&self, id: usize, function: fn(&Services, &Repositories)) {
         if let Ok(mut update_functions) = self.update_functions.write() {
             update_functions.insert(id, function);
             log!(Self, Medium, "Added a transform.");
@@ -163,7 +163,7 @@ impl EntityRepository {
      *
      * Temporary placeholder! Subject to change if not complete removal in the near future.
      */
-    pub fn get_update_functions(&self) -> Option<HashMap<usize, fn(Arc<Repositories>)>> {
+    pub fn get_update_functions(&self) -> Option<HashMap<usize, fn(&Services, &Repositories)>> {
         if let Ok(update_functions) = self.update_functions.read() {
             Some(update_functions.clone())
         } else {
@@ -188,7 +188,7 @@ impl EntityRepository {
      * }
      * ```
      */
-    pub fn get_camera_transform(&self, player_id: i16) -> Option<Transform> {
+    pub fn get_camera_transform(&self, player_id: u8) -> Option<Transform> {
         if let Ok(controllers) = self.controllers.read() {
             for (entity_id, controller_id) in controllers.iter() {
                 if *controller_id == player_id {
@@ -240,7 +240,7 @@ impl EntityRepository {
      * }
      * ```
      */
-    pub fn get_player_controller(&self, player_id: i16) -> Option<usize> {
+    pub fn get_player_controller(&self, player_id: u8) -> Option<usize> {
         if let Ok(controllers) = self.controllers.read() {
             for (entity_id, controller_id) in controllers.iter() {
                 if controller_id == &player_id {

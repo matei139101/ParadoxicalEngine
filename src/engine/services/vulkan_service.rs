@@ -1,7 +1,7 @@
 use crate::engine::services::service::Service;
-use crate::engine::vulkan::vulkan_container::{VulkanContainer};
-use crate::resources::events::vulkan_events::{VulkanCreateObjectEvent};
-use crate::{prelude::*};
+use crate::engine::vulkan::vulkan_container::VulkanContainer;
+use crate::prelude::*;
+use crate::resources::events::vulkan_events::VulkanCreateObjectEvent;
 
 /// Defines the vulkan service.
 ///
@@ -60,7 +60,7 @@ impl VulkanService {
     }
 
     /// Draws a frame to the window from the perspective of the given player id.
-    fn draw_frame(&self, player_id: i16) {
+    fn draw_frame(&self, player_id: u8) {
         if let Some(camera_transform) = self
             .repositories
             .get_entity_repository()
@@ -83,12 +83,7 @@ impl VulkanService {
     }
 
     /// Creates a vulkan object usable by vulkan during rendering from a given mesh.
-    fn create_vulkan_object(
-        &self,
-        object_id: &usize,
-        mesh: &String,
-        object_transform: &Transform,
-    ) {
+    fn create_vulkan_object(&self, object_id: &usize, mesh: &String, object_transform: &Transform) {
         if let Ok(mut vulkan_container) = self.vulkan_container.write() {
             if let Some(vulkan_container) = vulkan_container.as_mut() {
                 let mesh = Mesh::from_gltf(mesh)[0].clone();
@@ -116,12 +111,12 @@ impl VulkanService {
 }
 
 impl Service for VulkanService {
-    fn update(&self) {
-        self.draw_frame(1);
+    fn update(&self, services: &Services) {
+        self.draw_frame(services.get_gamestate_service().get_active_player());
     }
 
     fn is_ready(&self) -> bool {
-        if let Ok(vulkan_container) = self. vulkan_container.read() {
+        if let Ok(vulkan_container) = self.vulkan_container.read() {
             vulkan_container.is_some()
         } else {
             false

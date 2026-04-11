@@ -1,12 +1,12 @@
-use std::thread::{sleep};
-use crate::prelude::{*};
+use crate::prelude::*;
+use std::thread::sleep;
 
 /// Defines the scheduler system.
 ///
 /// The scheduler handles creating threads and making update calls. Many engine systems/services
 /// block the current thread for functionality while others simply benefit greatly from
-/// asynchronous work. 
-/// 
+/// asynchronous work.
+///
 /// Having a central scheduler ensures it is solely responsible for threading
 /// and allows various tasks to be combined or split into different threads for efficient thread
 /// use.
@@ -20,8 +20,16 @@ pub struct Scheduler {
 
 impl Scheduler {
     /// Creates a new scheduler using a provided channel, services and event bus.
-    pub fn new(sender: Sender<Box<dyn Any + Send + Sync>>, services: Arc<Services>, event_bus: Arc<EventBus>) -> Scheduler {
-        Scheduler { sender, services, event_bus }
+    pub fn new(
+        sender: Sender<Box<dyn Any + Send + Sync>>,
+        services: Arc<Services>,
+        event_bus: Arc<EventBus>,
+    ) -> Scheduler {
+        Scheduler {
+            sender,
+            services,
+            event_bus,
+        }
     }
 
     /// Starts the various threads.
@@ -40,28 +48,30 @@ impl Scheduler {
         log!(Self, Critical, "Starting service thread.");
         let services = Arc::clone(&self.services);
 
-        let _ = thread::Builder::new().name("Synchronizer".to_string()).spawn(move || {
-            while !services.get_vulkan_service().is_ready() {
-                sleep(Duration::from_millis(10));
-            }
+        let _ = thread::Builder::new()
+            .name("Synchronizer".to_string())
+            .spawn(move || {
+                while !services.get_vulkan_service().is_ready() {
+                    sleep(Duration::from_millis(10));
+                }
 
-            loop {
-                services.get_vulkan_service().update();
-                services.get_entity_service().update();
-            }
-        });
+                loop {
+                    services.get_vulkan_service().update(&services);
+                    services.get_entity_service().update(&services);
+                }
+            });
     }
 
     /// Creates a thread used by auxilliary engine components and periodically makes update calls.
     /// Used by components which benefit from constant updating and keeps the thread hot.
     fn make_auxilliary_thread(&self) {
         log!(Self, Critical, "Starting auxilliary thread.");
-        let _ = thread::Builder::new().name("Auxilliary".to_string()).spawn(move || {
-            loop {
+        let _ = thread::Builder::new()
+            .name("Auxilliary".to_string())
+            .spawn(move || loop {
                 LOGGER.update();
                 DASHBOARD.update();
-            }
-        });
+            });
     }
 
     /// Creates a thread used exclusively by the event bus. The event bus loop is thread blocking
@@ -70,9 +80,11 @@ impl Scheduler {
         log!(Self, Dev, "Starting eventbus thread.");
         let event_bus = Arc::clone(&self.event_bus);
 
-        let _ = thread::Builder::new().name("EventBus".to_string()).spawn(move || {
-            event_bus.run(receiver);
-        });
+        let _ = thread::Builder::new()
+            .name("EventBus".to_string())
+            .spawn(move || {
+                event_bus.run(receiver);
+            });
     }
 
     /// Runs the main window loop. Does not create a new thread for the window as winnit doesn't

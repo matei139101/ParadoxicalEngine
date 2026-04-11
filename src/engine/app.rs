@@ -2,19 +2,14 @@ use crate::{
     prelude::*,
     resources::{
         entities::{base_controller::BaseController, base_cube::BaseCube},
-        events::{
-            entity_events::CreateEntityEvent,
-        },
+        events::entity_events::CreateEntityEvent,
     },
 };
 use glam::vec3;
-use std::{
-    any::Any,
-    sync::{Arc},
-};
+use std::{any::Any, sync::Arc};
 use winit::{
     application::ApplicationHandler,
-    event::{DeviceEvent, DeviceId,WindowEvent},
+    event::{DeviceEvent, DeviceId, WindowEvent},
     event_loop::ActiveEventLoop,
     keyboard::PhysicalKey,
     window::{Window, WindowId},
@@ -33,10 +28,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(
-        services: Arc<Services>,
-        async_sender: Sender<Box<dyn Any + Send + Sync>>,
-    ) -> Self {
+    pub fn new(services: Arc<Services>, async_sender: Sender<Box<dyn Any + Send + Sync>>) -> Self {
         App {
             window: Default::default(),
             viewport_info: Default::default(),
@@ -65,7 +57,9 @@ impl ApplicationHandler for App {
             self.window.as_ref().unwrap().clone(),
             self.viewport_info.as_ref().unwrap(),
         );
-        self.services.get_vulkan_service().create_vulkan_container(vulkan_container);
+        self.services
+            .get_vulkan_service()
+            .create_vulkan_container(vulkan_container);
 
         //For testing purposes
         let cube1_transform = Transform::new(vec3(-1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0));
@@ -84,7 +78,7 @@ impl ApplicationHandler for App {
             entity: Box::new(BaseController::new(
                 "Player 1".to_string(),
                 controller_transform,
-                1,
+                0,
             )),
         }));
 
@@ -104,8 +98,7 @@ impl ApplicationHandler for App {
                 log!(Self, High, "The close button was pressed; stopping");
                 event_loop.exit();
             }
-            WindowEvent::RedrawRequested => {
-            }
+            WindowEvent::RedrawRequested => {}
 
             WindowEvent::Resized(_size) => {
                 log!(Self, High, "Window Resized");
@@ -132,6 +125,6 @@ impl ApplicationHandler for App {
         _device_id: DeviceId,
         event: DeviceEvent,
     ) {
-         self.services.get_input_service().input_axis(event);
+        self.services.get_input_service().input_axis(event);
     }
 }

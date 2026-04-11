@@ -39,9 +39,7 @@ impl EntityService {
      * Assigns handlers for different events listened to by this service.
      */
     pub fn observe_events(self_ptr: Arc<EntityService>) {
-        let bus_arc = {
-            self_ptr.event_bus_ptr.clone()
-        };
+        let bus_arc = { self_ptr.event_bus_ptr.clone() };
 
         bus_arc
             .clone()
@@ -67,10 +65,14 @@ impl EntityService {
      * the camera control axes, this is to ensure the axes only reset after the entities have
      * updated, but is only a temporary workaround until a better solution is found.
      */
-    pub fn update(&self) {
-        if let Some(update_functions) = self.repositories.get_entity_repository().get_update_functions() {
+    pub fn update(&self, services: &Services) {
+        if let Some(update_functions) = self
+            .repositories
+            .get_entity_repository()
+            .get_update_functions()
+        {
             for (_index, function) in update_functions {
-                function(self.repositories.clone())
+                function(services, &self.repositories)
             }
         }
 
@@ -80,6 +82,5 @@ impl EntityService {
         self.repositories
             .get_input_repository()
             .set_axis("CAMERAX", 0f64);
-
     }
 }
