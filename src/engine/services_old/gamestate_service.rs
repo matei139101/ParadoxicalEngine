@@ -1,5 +1,4 @@
 use std::sync::{Arc, RwLock};
-
 use crate::prelude::*;
 
 /// Defines the gamestate service.
