@@ -1,27 +1,26 @@
 // Tools
 // std
 pub use std::any::{Any, TypeId};
-pub use std::sync::{Arc, RwLock};
 pub use std::collections::hash_map::HashMap;
+pub use std::io;
+pub use std::sync::{Arc, RwLock};
 pub use std::thread;
 pub use std::time::{Duration, Instant};
-pub use std::io;
 
 // glam
-pub use glam::{Vec3, bool};
+pub use glam::{bool, Vec3};
 
 // core
 pub use core::f64;
 
 // sync
-pub use std::sync::mpsc::{self, Sender, Receiver};
+pub use std::sync::mpsc::{self, Receiver, Sender};
 
 // winit
 pub use winit::event::DeviceEvent;
-pub use winit::event_loop::{EventLoop, ControlFlow};
+pub use winit::event_loop::{ControlFlow, EventLoop};
 
-
-// New IDK IDK IDK
+// [TO-DO]: Organize and properly comment the engine prelude mod file.
 pub use crate::engine::*;
 
 // Devtools

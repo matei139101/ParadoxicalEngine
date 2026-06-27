@@ -21,14 +21,18 @@ impl Window {
 }
 
 impl ApplicationHandler for Window {
-    //[TO-DO]: This needs to be cleaned up and have dev stuff removed from it.
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let window_attributes = winit::window::Window::default_attributes();
         self.window = Some(event_loop.create_window(window_attributes).unwrap().into());
         self.window.as_ref().unwrap().request_redraw();
     }
 
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: winit::window::WindowId, event: WindowEvent) {
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        _id: winit::window::WindowId,
+        event: WindowEvent,
+    ) {
         match event {
             WindowEvent::CloseRequested => {
                 log!(Self, High, "The close button was pressed; stopping");
@@ -60,5 +64,6 @@ impl ApplicationHandler for Window {
         _event_loop: &ActiveEventLoop,
         _device_id: DeviceId,
         _event: DeviceEvent,
-    ) {}
+    ) {
+    }
 }

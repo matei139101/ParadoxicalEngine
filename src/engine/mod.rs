@@ -1,12 +1,13 @@
 mod engine;
 mod scheduler;
-mod types;
 mod services;
+mod types;
 mod utils;
-mod app;
+mod window;
 
-pub use types::*;
-pub use services::*;
-pub use scheduler::*;
 pub use engine::*;
+pub use scheduler::*;
+pub use services::*;
+pub use types::*;
 pub use utils::*;
+pub use window::*;
