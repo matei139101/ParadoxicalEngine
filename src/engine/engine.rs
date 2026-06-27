@@ -1,7 +1,10 @@
-use crossterm::{execute, terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}};
-use std::panic;
-use std::io;
 use crate::prelude::*;
+use crossterm::{
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
+use std::io;
+use std::panic;
 
 /// The main struct containing top level engine variables and functions.
 ///
@@ -15,7 +18,7 @@ pub struct Engine {
 impl Engine {
     /// Returns a new [`Engine`] containing a freshly created [`Scheduler`] and [`ServiceLocator`].
     pub fn new() -> Self {
-        Self { 
+        Self {
             service_locator: ServiceLocator::new(),
             scheduler: Scheduler::new(),
         }
@@ -29,9 +32,11 @@ impl Engine {
         enable_raw_mode().unwrap();
         execute!(std::io::stdout(), EnterAlternateScreen).unwrap();
 
+        let debug_service = Arc::new(DebugService::new());
         let render_service = Arc::new(RenderService::new());
 
-        self.service_locator.add_service(ServiceType::RenderService, render_service);
+        self.service_locator.add_service(debug_service);
+        self.service_locator.add_service(render_service);
     }
 
     /// Runs the [`Engine`]. This is the main loop of the engine, if this exits, this means the
@@ -52,11 +57,11 @@ impl Engine {
     fn set_panic_hooks(&self) {
         log!(Self, Critical, "Setting up engine panic hooks.");
         let default_hook = panic::take_hook();
-    
+
         panic::set_hook(Box::new(move |info| {
             let _ = disable_raw_mode();
             let _ = execute!(io::stdout(), LeaveAlternateScreen);
-        
+
             default_hook(info);
         }));
     }

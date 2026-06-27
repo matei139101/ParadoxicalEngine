@@ -1,6 +1,4 @@
 use crate::prelude::*;
-use glam::vec3;
-use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
     event::{DeviceEvent, DeviceId, WindowEvent},
@@ -39,7 +37,7 @@ impl ApplicationHandler for Window {
                 event_loop.exit();
             }
             WindowEvent::RedrawRequested => {
-                event_loop.request_redraw();
+                self.window.as_ref().unwrap().request_redraw();
             }
 
             WindowEvent::Resized(_size) => {

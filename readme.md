@@ -29,7 +29,7 @@ rustup default stable
 - Note:
 If building fails cause shaderc-sys has a mental breakdown for absolutely no reason, you might need to install a Cmake version <4 and then run a build with an extra flag:
 ```
-export CXXFLAGS="-include cstdint"
+export CXXFLAGS="-include cstdint" CMAKE_POLICY_VERSION_MINIMUM=3.5
 cargo clean && cargo build
 ```
 

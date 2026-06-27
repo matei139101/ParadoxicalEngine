@@ -15,26 +15,33 @@ impl Scheduler {
 
     /// Sets up required threads for the provided [`ServiceLocator`] and starts them.
     pub fn run(&self, service_locator: &ServiceLocator) {
-        let _ = service_locator.iter().map(|(_service_type, service)| {
+        log!(Self, Critical, "Starting scheduled threads.");
+        for (_service_type, service) in service_locator.iter() {
             self.start_thread(service.clone());
-        });
+        }
+        self.start_window_thread();
     }
 
     /// Starts a thread for the provided [`Service`].
     fn start_thread(&self, service: Arc<dyn Service>) {
         log!(Self, Critical, "Starting thread.");
-        let _ = thread::spawn(move || loop {
+        let _handle = thread::spawn(move || loop {
             service.update();
+            thread::sleep(Duration::from_millis(1));
         });
     }
 
     /// Starts the [`Window`] event loop on the main thread
-    fn start_window_thread(&self, event_loop: EventLoop<()>) {
+    fn start_window_thread(&self) {
+        log!(Self, Critical, "Starting window event loop.");
         let event_loop = EventLoop::new().unwrap();
         event_loop.set_control_flow(ControlFlow::Poll);
 
-        let mut app = Window::new();
+        //let mut app = Window::new();
 
-        let _ = event_loop.run_app(&mut app);
+        //let _ = event_loop.run_app(&mut app);
+        loop {
+            thread::sleep(Duration::from_millis(1));
+        }
     }
 }
