@@ -78,14 +78,11 @@ impl DebugService {
 
 impl Service for DebugService {
     fn update(&self) {
-        log!(Self, Critical, "Updating debug service.");
         static LAST_TERMINAL_UPDATE: RwLock<Option<Instant>> = RwLock::new(None);
 
         if let Ok(last_update) = LAST_TERMINAL_UPDATE.read() {
-            if let Some(last_update) = last_update.as_ref() {
-                if last_update.elapsed() <= Duration::from_millis(16) {
-                    return;
-                }
+            if let Some(last_update) = last_update.as_ref() && last_update.elapsed() <= Duration::from_millis(16) {
+                return;
             }
             drop(last_update);
 
