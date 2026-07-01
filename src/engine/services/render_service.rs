@@ -1,26 +1,23 @@
-use smallvec::smallvec;
-
 use crate::prelude::*;
-use std::io::Read;
+use smallvec::{smallvec, SmallVec};
+use vulkano::{pipeline::Pipeline, sync::GpuFuture};
 
 /// Handles all rendering related tasks.
 ///
 /// This takes care of making the required calls to graphicsAPIs for different rendering processes.
 pub struct RenderService {
-    graphics_api: Arc<RwLock<dyn GraphicsAPI>>,
+    graphics_api: Option<Arc<RwLock<dyn GraphicsAPI>>>,
 }
 
 impl RenderService {
     pub fn new() -> Self {
-        Self {
-            graphics_api: Arc::new(RwLock::new(Vulkan::new())),
-        }
+        Self { graphics_api: None }
     }
 }
 
 impl Service for RenderService {
     fn update(&self) {
-        self.graphics_api.read().unwrap().render_frame();
+        todo!()
     }
 
     fn get_data(&self) {}
@@ -37,10 +34,29 @@ trait GraphicsAPI: Any + Send + Sync {
 /// Defines a struct containing all vulkan functionalities for different processes.
 ///
 /// [TO-DO]: Add proper error handling
-struct Vulkan {}
+struct Vulkan {
+    logical_device: Arc<vulkano::device::Device>,
+    queue: Arc<vulkano::device::Queue>,
+    swapchain: Arc<vulkano::swapchain::Swapchain>,
+    memory_allocator: Arc<vulkano::memory::allocator::StandardMemoryAllocator>,
+    command_buffer_allocator:
+        Arc<vulkano::command_buffer::allocator::StandardCommandBufferAllocator>,
+    descriptor_set_allocator:
+        Arc<vulkano::descriptor_set::allocator::StandardDescriptorSetAllocator>,
+    graphics_pipeline: Arc<vulkano::pipeline::graphics::GraphicsPipeline>,
+    framebuffers: Vec<Arc<vulkano::render_pass::Framebuffer>>,
+    viewports: SmallVec<[vulkano::pipeline::graphics::viewport::Viewport; 2]>,
+    scissors: SmallVec<[vulkano::pipeline::graphics::viewport::Scissor; 2]>,
+    vulkan_objects: HashMap<usize, VulkanObject>,
+    window: Arc<winit::window::Window>,
+}
 
 impl Vulkan {
-    pub fn new() -> Self {
+    pub fn new(
+        event_loop: &winit::event_loop::ActiveEventLoop,
+        window: Arc<winit::window::Window>,
+        viewport_info: &ViewportInfo,
+    ) -> Self {
         log!(Self, Critical, "Setting up vulkan graphicsAPI.");
 
         let device_extensions = vulkano::device::DeviceExtensions {
@@ -48,7 +64,67 @@ impl Vulkan {
             ..Default::default()
         };
 
-        Self {}
+        let instance = Vulkan::create_instance(event_loop);
+        let surface = Vulkan::create_surface(instance.clone(), window.clone());
+        let (physical_device, queue_family_index) =
+            Vulkan::create_physical_device(instance.clone(), surface.clone(), &device_extensions);
+        let (logical_device, queue) = Vulkan::create_logical_device(
+            physical_device.clone(),
+            queue_family_index,
+            &device_extensions,
+        );
+        let (swapchain, images) = Vulkan::create_swapchain(
+            physical_device.clone(),
+            logical_device.clone(),
+            window.clone(),
+            surface.clone(),
+        );
+        let image_views = Vulkan::create_image_views(&images);
+        let render_pass = Vulkan::create_render_pass(logical_device.clone(), swapchain.clone());
+        let memory_allocator = Vulkan::create_memory_allocator(logical_device.clone());
+        let command_buffer_allocator =
+            Vulkan::create_command_buffer_allocator(logical_device.clone());
+        let descriptor_set_allocator =
+            Vulkan::create_descriptor_set_allocator(logical_device.clone());
+        let graphics_pipeline =
+            Vulkan::create_graphics_pipeline(logical_device.clone(), render_pass.clone());
+        let framebuffers = Vulkan::create_frame_buffers(
+            render_pass.clone(),
+            image_views.clone(),
+            memory_allocator.clone(),
+        );
+
+        let viewports = smallvec![vulkano::pipeline::graphics::viewport::Viewport {
+            offset: [viewport_info.offset[0], viewport_info.offset[1]],
+            extent: [viewport_info.extent[0], viewport_info.extent[1]],
+            depth_range: 0.0..=1.0,
+        }];
+
+        let scissors = smallvec![vulkano::pipeline::graphics::viewport::Scissor {
+            offset: [
+                viewport_info.offset[0] as u32,
+                viewport_info.offset[1] as u32
+            ],
+            extent: [
+                viewport_info.extent[0] as u32,
+                viewport_info.extent[1] as u32
+            ],
+        }];
+
+        Self {
+            logical_device,
+            queue,
+            swapchain,
+            memory_allocator,
+            command_buffer_allocator,
+            descriptor_set_allocator,
+            graphics_pipeline,
+            framebuffers,
+            viewports,
+            scissors,
+            vulkan_objects: HashMap::new(),
+            window,
+        }
     }
 
     /// Creates a Vulkan instance.
@@ -88,7 +164,7 @@ impl Vulkan {
     fn create_physical_device(
         instance: std::sync::Arc<vulkano::instance::Instance>,
         surface: std::sync::Arc<vulkano::swapchain::Surface>,
-        device_extensions: vulkano::device::DeviceExtensions,
+        device_extensions: &vulkano::device::DeviceExtensions,
     ) -> (
         std::sync::Arc<vulkano::device::physical::PhysicalDevice>,
         u32,
@@ -321,7 +397,7 @@ impl Vulkan {
                 push_constant_ranges: vec![vulkano::pipeline::layout::PushConstantRange {
                     stages: vulkano::shader::ShaderStages::VERTEX,
                     offset: 0,
-                    size: std::mem::size_of::<vulkanPushConstants>() as u32,
+                    size: std::mem::size_of::<PushConstants>() as u32,
                 }],
                 ..Default::default()
             },
@@ -571,7 +647,7 @@ impl Vulkan {
                 vulkano::command_buffer::RenderPassBeginInfo {
                     clear_values: vec![
                         Some([0.0, 0.0, 0.0, 1.0].into()),
-                        Some(vulkano::render_pass::ClearValue::Depth(1.0)),
+                        Some(vulkano::format::ClearValue::Depth(1.0)),
                     ],
                     ..vulkano::command_buffer::RenderPassBeginInfo::framebuffer(
                         self.framebuffers[image_index].clone(),
@@ -633,7 +709,7 @@ impl Vulkan {
     pub fn draw_frame(&mut self, camera_transform: Transform) {
         let (image_index, _, acquire_future) =
             vulkano::swapchain::acquire_next_image(self.swapchain.clone(), None).unwrap();
-        let view_projection = VulkanContainer::make_view_projection(
+        let view_projection = Vulkan::make_view_projection(
             self.viewports[0].extent[0] / self.viewports[0].extent[1],
             &camera_transform.get_position(),
             &camera_transform.get_rotation(),
@@ -686,9 +762,147 @@ impl Vulkan {
 
         return view_projection;
     }
+    fn process_image_data(
+        &mut self,
+        image_data: gltf::image::Data,
+    ) -> (
+        Arc<vulkano::image::view::ImageView>,
+        Arc<vulkano::image::sampler::Sampler>,
+    ) {
+        let staging_buffer = vulkano::buffer::Buffer::from_iter(
+            self.memory_allocator.clone(),
+            vulkano::buffer::BufferCreateInfo {
+                usage: vulkano::buffer::BufferUsage::TRANSFER_SRC,
+                ..Default::default()
+            },
+            vulkano::memory::allocator::AllocationCreateInfo {
+                memory_type_filter: vulkano::memory::allocator::MemoryTypeFilter::PREFER_HOST
+                    | vulkano::memory::allocator::MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                ..Default::default()
+            },
+            image_data.pixels,
+        )
+        .unwrap_or_else(|_| {
+            log!(Self, Critical, "Failed to process_image_data");
+            panic!()
+        });
+
+        let image = vulkano::image::Image::new(
+            self.memory_allocator.clone(),
+            vulkano::image::ImageCreateInfo {
+                image_type: vulkano::image::ImageType::Dim2d,
+                format: vulkano::format::Format::R8G8B8A8_SRGB,
+                extent: [image_data.width, image_data.height, 1],
+                usage: vulkano::image::ImageUsage::TRANSFER_DST
+                    | vulkano::image::ImageUsage::SAMPLED,
+                ..Default::default()
+            },
+            vulkano::memory::allocator::AllocationCreateInfo::default(),
+        )
+        .unwrap_or_else(|_| {
+            log!(Self, Critical, "Failed to process_image_data");
+            panic!()
+        });
+
+        let mut builder = vulkano::command_buffer::AutoCommandBufferBuilder::primary(
+            self.command_buffer_allocator.clone(),
+            self.queue.queue_family_index(),
+            vulkano::command_buffer::CommandBufferUsage::OneTimeSubmit,
+        )
+        .unwrap_or_else(|_| {
+            log!(Self, Critical, "Failed to process_image_data");
+            panic!()
+        });
+
+        builder
+            .copy_buffer_to_image(
+                vulkano::command_buffer::CopyBufferToImageInfo::buffer_image(
+                    staging_buffer,
+                    image.clone(),
+                ),
+            )
+            .unwrap_or_else(|_| {
+                log!(Self, Critical, "Failed to process_image_data");
+                panic!()
+            });
+
+        let command_buffer = builder.build().unwrap();
+        vulkano::sync::now(self.queue.device().clone())
+            .then_execute(self.queue.clone(), command_buffer)
+            .unwrap()
+            .then_signal_fence_and_flush()
+            .unwrap()
+            .wait(None)
+            .unwrap_or_else(|_| {
+                log!(Self, Critical, "Failed to process_image_data");
+                panic!()
+            });
+
+        // Image view
+        let image_view = vulkano::image::view::ImageView::new_default(image).unwrap();
+
+        // Sampler
+        let sampler = vulkano::image::sampler::Sampler::new(
+            self.queue.device().clone(),
+            vulkano::image::sampler::SamplerCreateInfo {
+                mag_filter: vulkano::image::sampler::Filter::Linear,
+                min_filter: vulkano::image::sampler::Filter::Linear,
+                mipmap_mode: vulkano::image::sampler::SamplerMipmapMode::Linear,
+                address_mode: [vulkano::image::sampler::SamplerAddressMode::Repeat; 3],
+                ..Default::default()
+            },
+        )
+        .unwrap_or_else(|_| {
+            log!(Self, Critical, "Failed to process_image_data");
+            panic!()
+        });
+
+        (image_view, sampler)
+    }
 }
+
 impl GraphicsAPI for Vulkan {
     fn render_frame(&self) {
         todo!();
+    }
+}
+
+#[derive(Debug)]
+pub struct VulkanObject {
+    vertex_buffer: vulkano::buffer::subbuffer::Subbuffer<[Vertex]>,
+    index_buffer: vulkano::buffer::subbuffer::Subbuffer<[u32]>,
+    object_transform: Transform,
+    texture_descriptor_set: Arc<vulkano::descriptor_set::DescriptorSet>,
+}
+
+impl VulkanObject {
+    pub fn new(
+        vertex_buffer: vulkano::buffer::Subbuffer<[Vertex]>,
+        index_buffer: vulkano::buffer::subbuffer::Subbuffer<[u32]>,
+        object_transform: Transform,
+        texture_descriptor_set: Arc<vulkano::descriptor_set::DescriptorSet>,
+    ) -> Self {
+        return VulkanObject {
+            vertex_buffer,
+            index_buffer,
+            object_transform,
+            texture_descriptor_set,
+        };
+    }
+
+    pub fn get_transform(&self) -> &Transform {
+        return &self.object_transform;
+    }
+
+    pub fn get_vertex_buffer(&self) -> &vulkano::buffer::Subbuffer<[Vertex]> {
+        return &self.vertex_buffer;
+    }
+
+    pub fn get_index_buffer(&self) -> &vulkano::buffer::Subbuffer<[u32]> {
+        return &self.index_buffer;
+    }
+
+    pub fn get_descriptor_set(&self) -> Arc<vulkano::descriptor_set::DescriptorSet> {
+        return self.texture_descriptor_set.clone();
     }
 }

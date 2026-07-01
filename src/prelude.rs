@@ -12,6 +12,7 @@ pub use winit::event_loop::{ControlFlow, EventLoop};
 
 // [TO-DO]: Organize and properly comment the engine prelude mod file.
 pub use crate::engine::*;
+pub use crate::resources::*;
 
 // Macros
 pub use crate::log;
