@@ -23,12 +23,15 @@ impl Scheduler {
     }
 
     /// Sets up required threads for the provided [`ServiceLocator`] and starts them.
-    pub fn run(&self, service_locator: &ServiceLocator) {
-        log!(Self, Critical, "Starting scheduled threads.");
+    pub fn run(&mut self, service_locator: &ServiceLocator) {
+        log!(Self, Critical, "Starting scheduler thread.");
+
+        let channel = self.scheduler_channel.clone();
+        self.scheduler_thread = Some(thread::spawn(|| {Self::thread(channel)}));
+
         for (_service_type, service) in service_locator.iter() {
             self.start_thread(service.clone(), self.scheduler_channel.1.clone());
         }
-        self.start_window_thread();
     }
 
     /// Starts a thread for the provided [`Service`].
@@ -40,17 +43,10 @@ impl Scheduler {
         });
     }
 
-    /// Starts the [`Window`] event loop on the main thread
-    fn start_window_thread(&self) {
-        log!(Self, Critical, "Starting window event loop.");
-        let event_loop = EventLoop::new().unwrap();
-        event_loop.set_control_flow(ControlFlow::Poll);
-
-        //let mut app = Window::new();
-
-        //let _ = event_loop.run_app(&mut app);
+    fn thread(scheduler_channel: (Sender<i32>, Receiver<i32>)) {
         loop {
-            thread::sleep(Duration::from_millis(1));
+            log!(Self, Critical, "Tick.");
+            thread::sleep(Duration::from_secs(3));
         }
     }
 }

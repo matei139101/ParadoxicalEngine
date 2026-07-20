@@ -17,7 +17,6 @@ impl RenderService {
 
 impl Service for RenderService {
     fn update(&self) {
-        todo!()
     }
 
     fn get_data(&self) {}

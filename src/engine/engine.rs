@@ -41,9 +41,15 @@ impl Engine {
 
     /// Runs the [`Engine`]. This is the main loop of the engine, if this exits, this means the
     /// process is meant to be stopped.
-    pub fn run(&self) {
+    pub fn run(&mut self) {
         log!(Self, Critical, "Running engine runtime.");
         self.scheduler.run(&self.service_locator);
+
+        log!(Self, Critical, "Starting window event loop.");
+        let event_loop = EventLoop::new().unwrap();
+        event_loop.set_control_flow(ControlFlow::Poll);
+        let mut app = Window::new();
+        let _ = event_loop.run_app(&mut app);
     }
 
     /// Acts as [`Engine`] clean-up.

@@ -98,3 +98,16 @@ macro_rules! log {
         $crate::LOGGER.log_without_type($level, $msg);
     };
 }
+
+/// A macro which unifies panic handling in a safe and friendly way.
+#[macro_export]
+macro_rules! crash {
+    ($culprit:ty, $level:expr, $msg:expr) => {
+        $crate::LOGGER.log_with_type::<$culprit>($level, $msg);
+        panic!();
+    };
+    ($level:expr, $msg:expr) => {
+        $crate::LOGGER.log_without_type($level, $msg);
+        panic!()
+    };
+}
