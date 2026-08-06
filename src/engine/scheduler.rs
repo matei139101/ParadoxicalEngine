@@ -13,36 +13,27 @@ pub struct Scheduler {
 
 impl Scheduler {
     /// Returns a new [`Scheduler`].
-    pub fn new() -> Self {        
+    pub fn new() -> Self {
         Self {
             scheduler_thread: None,
         }
     }
 
     /// Sets up required threads for the provided [`ServiceLocator`] and starts them.
-    pub fn run(&mut self, service_locator: &ServiceLocator) {
+    pub fn run(&mut self, service_locator: Arc<ServiceLocator>) {
         log!(Self, Critical, "Starting scheduler thread.");
 
-        self.scheduler_thread = Some(thread::spawn(|| {Self::thread()}));
-
-        for (_service_type, service) in service_locator.iter() {
-            self.start_thread(service.clone());
-        }
+        self.scheduler_thread = Some(thread::spawn(|| Self::thread(service_locator)));
     }
 
-    /// Starts a thread for the provided [`Service`].
-    fn start_thread(&self, service: Arc<dyn Service>) {
-        log!(Self, Critical, "Starting thread.");
-        let _handle = thread::spawn(move || loop {
-            service.update();
-            thread::sleep(Duration::from_millis(1));
-        });
-    }
-
-    fn thread() {
+    fn thread(service_locator: Arc<ServiceLocator>) {
         loop {
-            log!(Self, Critical, "Tick.");
-            thread::sleep(Duration::from_secs(3));
+            log!(Self, Critical, "Update...");
+            service_locator.iter().for_each(|(_service_type, service)| {
+                service.update();
+            });
+
+            thread::sleep(Duration::from_secs(1));
         }
     }
 }

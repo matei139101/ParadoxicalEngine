@@ -16,3 +16,5 @@ pub use crate::resources::*;
 
 // Macros
 pub use crate::log;
+
+pub use glam::Vec3;

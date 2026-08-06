@@ -18,8 +18,12 @@ pub struct Engine {
 impl Engine {
     /// Returns a new [`Engine`] containing a freshly created [`Scheduler`] and [`ServiceLocator`].
     pub fn new() -> Self {
+        let debug_service = DebugService::new();
+        let render_service = RenderService::new();
+        let service_locator = ServiceLocator::new(render_service, debug_service);
+
         Self {
-            service_locator: Arc::new(ServiceLocator::new()),
+            service_locator: Arc::new(service_locator),
             scheduler: Scheduler::new(),
         }
     }
@@ -31,19 +35,13 @@ impl Engine {
         self.set_panic_hooks();
         enable_raw_mode().unwrap();
         execute!(std::io::stdout(), EnterAlternateScreen).unwrap();
-
-        let debug_service = Arc::new(DebugService::new());
-        let render_service = Arc::new(RenderService::new());
-
-        self.service_locator.add_service(debug_service);
-        self.service_locator.add_service(render_service);
     }
 
     /// Runs the [`Engine`]. This is the main loop of the engine, if this exits, this means the
     /// process is meant to be stopped.
     pub fn run(&mut self) {
         log!(Self, Critical, "Running engine runtime.");
-        self.scheduler.run(&self.service_locator);
+        self.scheduler.run(self.service_locator.clone());
 
         log!(Self, Critical, "Starting window event loop.");
         let event_loop = EventLoop::new().unwrap();

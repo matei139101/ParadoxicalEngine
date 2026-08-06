@@ -11,7 +11,9 @@ pub struct RenderService {
 
 impl RenderService {
     pub fn new() -> Self {
-        Self { graphics_api: Default::default()}
+        Self {
+            graphics_api: Default::default(),
+        }
     }
 
     pub fn set_graphics_api(&self, api: Box<dyn GraphicsAPI>) {
@@ -23,6 +25,14 @@ impl RenderService {
 
 impl Service for RenderService {
     fn update(&self) {
+        if let Some(graphics_api) = self.graphics_api.write().unwrap().as_mut() {
+            let camera_transform =
+                Transform::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
+            graphics_api.render_frame(camera_transform);
+        } else {
+            log!(Self, Critical, "GraphicsAPI not set, waiting 1 second.");
+            thread::sleep(Duration::from_secs(1));
+        }
     }
 
     fn get_data(&self) {}
@@ -32,14 +42,14 @@ impl Service for RenderService {
 ///
 /// This is to allow for easy addition of new APIs in the future by making graphicsAPI calls more
 /// generic.
-trait GraphicsAPI: Any + Send + Sync {
-    fn render_frame(&self);
+pub trait GraphicsAPI: Any + Send + Sync {
+    fn render_frame(&mut self, camera_transform: Transform);
 }
 
 /// Defines a struct containing all vulkan functionalities for different processes.
 ///
 /// [TO-DO]: Add proper error handling
-struct Vulkan {
+pub struct Vulkan {
     logical_device: Arc<vulkano::device::Device>,
     queue: Arc<vulkano::device::Queue>,
     swapchain: Arc<vulkano::swapchain::Swapchain>,
@@ -867,8 +877,8 @@ impl Vulkan {
 }
 
 impl GraphicsAPI for Vulkan {
-    fn render_frame(&self) {
-        todo!();
+    fn render_frame(&mut self, camera_transform: Transform) {
+        self.draw_frame(camera_transform);
     }
 }
 
@@ -887,27 +897,27 @@ impl VulkanObject {
         object_transform: Transform,
         texture_descriptor_set: Arc<vulkano::descriptor_set::DescriptorSet>,
     ) -> Self {
-        return VulkanObject {
+        VulkanObject {
             vertex_buffer,
             index_buffer,
             object_transform,
             texture_descriptor_set,
-        };
+        }
     }
 
     pub fn get_transform(&self) -> &Transform {
-        return &self.object_transform;
+        &self.object_transform
     }
 
     pub fn get_vertex_buffer(&self) -> &vulkano::buffer::Subbuffer<[Vertex]> {
-        return &self.vertex_buffer;
+        &self.vertex_buffer
     }
 
     pub fn get_index_buffer(&self) -> &vulkano::buffer::Subbuffer<[u32]> {
-        return &self.index_buffer;
+        &self.index_buffer
     }
 
     pub fn get_descriptor_set(&self) -> Arc<vulkano::descriptor_set::DescriptorSet> {
-        return self.texture_descriptor_set.clone();
+        self.texture_descriptor_set.clone()
     }
 }

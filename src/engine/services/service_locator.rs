@@ -5,25 +5,39 @@ use crate::prelude::*;
 /// This is to ensure the engine has one central spot for storing services which can later be used
 /// for dependendcy injection or calling other service functions across services.
 pub struct ServiceLocator {
-    services: HashMap<TypeId, Arc<dyn Service>>,
+    render_service: Arc<RenderService>,
+    debug_service: Arc<DebugService>,
 }
 
 impl ServiceLocator {
     /// Returns a new [`ServiceLocator`] with empty services.
-    pub fn new() -> Self {
+    pub fn new(render_service: RenderService, debug_service: DebugService) -> Self {
         Self {
-            services: HashMap::new(),
+            render_service: Arc::new(render_service),
+            debug_service: Arc::new(debug_service),
         }
     }
 
-    /// Adds a service to the [`ServiceLocator`] to be used.
-    pub fn add_service(&mut self, service: Arc<dyn Service>) {
-        let type_id = service.as_ref().type_id();
-        self.services.insert(type_id, service);
+    pub fn iter(&self) -> impl Iterator<Item = (TypeId, Arc<dyn Service>)> {
+        [
+            (
+                self.render_service.as_ref().type_id(),
+                self.render_service.clone() as Arc<dyn Service>,
+            ),
+            (
+                self.debug_service.as_ref().type_id(),
+                self.debug_service.clone() as Arc<dyn Service>,
+            ),
+        ]
+        .into_iter()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&TypeId, &Arc<dyn Service>)> {
-        self.services.iter()
+    pub fn get_render_service(&self) -> Arc<RenderService> {
+        self.render_service.clone()
+    }
+
+    pub fn get_debug_service(&self) -> Arc<DebugService> {
+        self.debug_service.clone()
     }
 }
 
