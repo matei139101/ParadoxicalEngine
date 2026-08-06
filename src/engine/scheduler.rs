@@ -1,5 +1,4 @@
 use std::thread::JoinHandle;
-use crossbeam_channel::{Receiver, Sender, unbounded};
 
 use crate::prelude::*;
 
@@ -10,7 +9,6 @@ use crate::prelude::*;
 /// distributed between the threads properly.
 pub struct Scheduler {
     scheduler_thread: Option<JoinHandle<()>>,
-    scheduler_channel: (Sender<i32>, Receiver<i32>)
 }
 
 impl Scheduler {
@@ -18,7 +16,6 @@ impl Scheduler {
     pub fn new() -> Self {        
         Self {
             scheduler_thread: None,
-            scheduler_channel: unbounded()
         }
     }
 
@@ -26,16 +23,15 @@ impl Scheduler {
     pub fn run(&mut self, service_locator: &ServiceLocator) {
         log!(Self, Critical, "Starting scheduler thread.");
 
-        let channel = self.scheduler_channel.clone();
-        self.scheduler_thread = Some(thread::spawn(|| {Self::thread(channel)}));
+        self.scheduler_thread = Some(thread::spawn(|| {Self::thread()}));
 
         for (_service_type, service) in service_locator.iter() {
-            self.start_thread(service.clone(), self.scheduler_channel.1.clone());
+            self.start_thread(service.clone());
         }
     }
 
     /// Starts a thread for the provided [`Service`].
-    fn start_thread(&self, service: Arc<dyn Service>, receiver: Receiver<i32>) {
+    fn start_thread(&self, service: Arc<dyn Service>) {
         log!(Self, Critical, "Starting thread.");
         let _handle = thread::spawn(move || loop {
             service.update();
@@ -43,7 +39,7 @@ impl Scheduler {
         });
     }
 
-    fn thread(scheduler_channel: (Sender<i32>, Receiver<i32>)) {
+    fn thread() {
         loop {
             log!(Self, Critical, "Tick.");
             thread::sleep(Duration::from_secs(3));

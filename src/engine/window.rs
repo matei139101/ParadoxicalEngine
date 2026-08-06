@@ -8,12 +8,14 @@ use winit::{
 
 pub struct Window {
     window: Option<Arc<winit::window::Window>>,
+    service_locator: Arc<ServiceLocator>,
 }
 
 impl Window {
-    pub fn new() -> Self {
+    pub fn new(service_locator: Arc<ServiceLocator>) -> Self {
         Self {
             window: Default::default(),
+            service_locator,
         }
     }
 }

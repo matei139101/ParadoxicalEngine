@@ -11,7 +11,7 @@ use std::panic;
 /// Main purpose is to clean up main and give structure to engine setup, shutdown and other top
 /// level functions.
 pub struct Engine {
-    service_locator: ServiceLocator,
+    service_locator: Arc<ServiceLocator>,
     scheduler: Scheduler,
 }
 
@@ -19,7 +19,7 @@ impl Engine {
     /// Returns a new [`Engine`] containing a freshly created [`Scheduler`] and [`ServiceLocator`].
     pub fn new() -> Self {
         Self {
-            service_locator: ServiceLocator::new(),
+            service_locator: Arc::new(ServiceLocator::new()),
             scheduler: Scheduler::new(),
         }
     }
@@ -48,7 +48,7 @@ impl Engine {
         log!(Self, Critical, "Starting window event loop.");
         let event_loop = EventLoop::new().unwrap();
         event_loop.set_control_flow(ControlFlow::Poll);
-        let mut app = Window::new();
+        let mut app = Window::new(self.service_locator.clone());
         let _ = event_loop.run_app(&mut app);
     }
 

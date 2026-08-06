@@ -6,12 +6,18 @@ use vulkano::{pipeline::Pipeline, sync::GpuFuture};
 ///
 /// This takes care of making the required calls to graphicsAPIs for different rendering processes.
 pub struct RenderService {
-    graphics_api: Option<Arc<RwLock<dyn GraphicsAPI>>>,
+    graphics_api: Arc<RwLock<Option<Box<dyn GraphicsAPI>>>>,
 }
 
 impl RenderService {
     pub fn new() -> Self {
-        Self { graphics_api: None }
+        Self { graphics_api: Default::default()}
+    }
+
+    pub fn set_graphics_api(&self, api: Box<dyn GraphicsAPI>) {
+        if let Ok(mut graphics_api) = self.graphics_api.write() {
+            *graphics_api = Some(api);
+        }
     }
 }
 
