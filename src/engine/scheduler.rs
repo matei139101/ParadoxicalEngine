@@ -34,7 +34,7 @@ impl Scheduler {
             while let Ok(request) = receiver.recv() {
                 log!(Self, Critical, "Update...");
                 service_locator.iter().for_each(|(_service_type, service)| {
-                    service.update();
+                    service.update(service_locator.clone());
                 });
 
                 request.done.send(()).unwrap();

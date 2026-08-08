@@ -1,4 +1,6 @@
-use crate::prelude::*;
+use std::sync::atomic::{AtomicU32, AtomicU64};
+
+use crate::{prelude::*};
 use smallvec::{smallvec, SmallVec};
 use vulkano::{pipeline::Pipeline, sync::GpuFuture};
 
@@ -7,12 +9,16 @@ use vulkano::{pipeline::Pipeline, sync::GpuFuture};
 /// This takes care of making the required calls to graphicsAPIs for different rendering processes.
 pub struct RenderService {
     graphics_api: Arc<RwLock<Option<Box<dyn GraphicsAPI>>>>,
+    total_frames: AtomicU32,
+    frame_time_nano: AtomicU64,
 }
 
 impl RenderService {
     pub fn new() -> Self {
         Self {
             graphics_api: Default::default(),
+            total_frames: 0.into(),
+            frame_time_nano: 0.into(),
         }
     }
 
@@ -21,14 +27,32 @@ impl RenderService {
             *graphics_api = Some(api);
         }
     }
+
+    pub fn get_frames(&self) -> u32 {
+        self.total_frames.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    pub fn get_frame_time(&self) -> Duration {
+        Duration::from_nanos(self.frame_time_nano.load(std::sync::atomic::Ordering::Relaxed))
+    }
 }
 
 impl Service for RenderService {
-    fn update(&self) {
+    fn update(&self, _service_locator: Arc<ServiceLocator>) {
         if let Some(graphics_api) = self.graphics_api.write().unwrap().as_mut() {
+            let frame_start = Instant::now();
+
             let camera_transform =
                 Transform::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
             graphics_api.render_frame(camera_transform);
+
+            let frame_time = frame_start.elapsed();
+            self.frame_time_nano.store(
+                frame_time.as_nanos() as u64,
+                std::sync::atomic::Ordering::Relaxed,
+            );
+
+            self.total_frames.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         } else {
             log!(Self, Critical, "GraphicsAPI not set, waiting 1 second.");
             thread::sleep(Duration::from_secs(1));

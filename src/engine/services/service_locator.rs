@@ -44,6 +44,6 @@ impl ServiceLocator {
 /// A trait which needs to be implemented for a [`Service`] to be usable by the [`ServiceLocator`]
 /// and the rest of the engine.
 pub trait Service: Any + Send + Sync {
-    fn update(&self);
+    fn update(&self, service_locator: Arc<ServiceLocator>);
     fn get_data(&self);
 }

@@ -1,10 +1,7 @@
 pub use crate::prelude::*;
 use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
-    prelude::CrosstermBackend,
-    widgets::{Block, Borders, List, ListDirection, Tabs},
-    Frame, Terminal,
+    Frame, Terminal, layout::{Constraint, Direction, Layout, Rect}, prelude::CrosstermBackend, style::{Color, Modifier, Style}, text::{Line, Span}, widgets::{Block, Borders, List, ListDirection, Paragraph, Tabs}
 };
 
 /// Handles all debug related tasks such as updating the devtool dashboard and logs.
@@ -24,7 +21,7 @@ impl DebugService {
     }
 
     /// Draws the dashboard to the terminal.
-    fn draw_terminal(&self) {
+    fn draw_terminal(&self, service_locator: Arc<ServiceLocator>) {
         self.terminal
             .write()
             .expect("Program failed to writelock the terminal for logging...")
@@ -52,7 +49,7 @@ impl DebugService {
 
                 match *selected_tab {
                     0 => self.render_logs(frame, layout[1]),
-                    1 => self.render_stats(frame, layout[1]),
+                    1 => self.render_stats(service_locator, frame, layout[1]),
                     _ => {}
                 }
             })
@@ -72,12 +69,41 @@ impl DebugService {
         );
     }
 
-    /// Draws the statistics to the terminal.
-    fn render_stats(&self, _frame: &mut Frame, _layout: Rect) {}
+
+/// Draws the statistics to the terminal.
+fn render_stats(&self, service_locator: Arc<ServiceLocator>, frame: &mut Frame, layout: Rect) {
+    let framecount = service_locator.get_render_service().get_frames();
+    let frametime = service_locator.get_render_service().get_frame_time();
+
+    let stats: Vec<(&str, String)> = vec![
+        ("Frames", framecount.to_string()),
+        ("Frametime", frametime.as_millis().to_string()),
+    ];
+
+    let lines: Vec<Line> = stats
+        .into_iter()
+        .map(|(name, value)| {
+            Line::from(vec![
+                Span::styled(
+                    format!("{name}: "),
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(value, Style::default().fg(Color::White)),
+            ])
+        })
+        .collect();
+
+    let paragraph = Paragraph::new(lines)
+        .block(Block::default().borders(Borders::ALL).title("Stats"));
+
+    frame.render_widget(paragraph, layout);
+}
 }
 
 impl Service for DebugService {
-    fn update(&self) {
+    fn update(&self, service_locator: Arc<ServiceLocator>) {
         static LAST_TERMINAL_UPDATE: RwLock<Option<Instant>> = RwLock::new(None);
 
         if let Ok(last_update) = LAST_TERMINAL_UPDATE.read() {
@@ -88,7 +114,7 @@ impl Service for DebugService {
 
             *LAST_TERMINAL_UPDATE.write().unwrap() = Some(Instant::now());
 
-            self.draw_terminal();
+            self.draw_terminal(service_locator);
 
             if event::poll(Duration::from_millis(0)).unwrap() {
                 match event::read().unwrap() {
