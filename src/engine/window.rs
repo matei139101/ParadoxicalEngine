@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crossbeam_channel::{bounded, Sender};
 use winit::{
     application::ApplicationHandler,
     event::{DeviceEvent, DeviceId, WindowEvent},
@@ -9,13 +10,18 @@ use winit::{
 pub struct Window {
     window: Option<Arc<winit::window::Window>>,
     service_locator: Arc<ServiceLocator>,
+    scheduler_sender: Sender<WindowReady>,
 }
 
 impl Window {
-    pub fn new(service_locator: Arc<ServiceLocator>) -> Self {
+    pub fn new(
+        service_locator: Arc<ServiceLocator>,
+        scheduler_sender: Sender<WindowReady>,
+    ) -> Self {
         Self {
             window: Default::default(),
             service_locator,
+            scheduler_sender,
         }
     }
 }
@@ -56,6 +62,11 @@ impl ApplicationHandler for Window {
                 event_loop.exit();
             }
             WindowEvent::RedrawRequested => {
+                let (reply_tx, reply_rx) = bounded(1);
+                self.scheduler_sender
+                    .send(WindowReady { done: reply_tx })
+                    .unwrap();
+                reply_rx.recv().unwrap();
                 self.window.as_ref().unwrap().request_redraw();
             }
 

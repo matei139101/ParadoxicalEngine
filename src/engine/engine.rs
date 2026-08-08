@@ -46,7 +46,10 @@ impl Engine {
         log!(Self, Critical, "Starting window event loop.");
         let event_loop = EventLoop::new().unwrap();
         event_loop.set_control_flow(ControlFlow::Poll);
-        let mut app = Window::new(self.service_locator.clone());
+        let mut app = Window::new(
+            self.service_locator.clone(),
+            self.scheduler.scheduler_sender.clone(),
+        );
         let _ = event_loop.run_app(&mut app);
     }
 
